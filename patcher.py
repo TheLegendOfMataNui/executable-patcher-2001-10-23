@@ -22,21 +22,21 @@ class PatchWin10(Patch):
 	def patch(self):
 		# Check if pointer is -1, and if so always throw an exception.
 		# In Windows 10 CloseHandle(-1) no longer returns -1 (undefined behavior).
-		self.fp.seek(0xDB853)
+		self.fp.seek(0xDB853) # 0x4DC453
 		self.fp.write(bytearray([
-			# Inserted before existing code:
-			0x83, 0xBB, 0x24, 0x01, 0x00, 0x00, 0xFF, # cmp    DWORD PTR [ebx+0x124],0xffffffff
+			# Inserted before existing code.
+			0x83, 0xBB, 0x24, 0x01, 0x00, 0x00, 0xFF, # cmp    DWORD PTR [ebx+0x124], 0xffffffff
 			0x74, 0x04,                               # je     0xd
 			# Existing code, shifted down, addresses corrected.
-			0x85, 0xC0,                               # test   eax,eax
+			0x85, 0xC0,                               # test   eax, eax
 			0x75, 0x11,                               # jne    0x1e
 			0x68, 0x18, 0x91, 0x83, 0x00,             # push   0x839118
 			0x68, 0x40, 0x91, 0x83, 0x00,             # push   0x839140
 			0xE8, 0x81, 0xCD, 0xFF, 0xFF,             # call   0xffffcd9d
 			0x59,                                     # pop    ecx
 			0x59,                                     # pop    ecx
-			0xC6, 0x83, 0x20, 0x01, 0x00, 0x00, 0x00, # mov    BYTE PTR [ebx+0x120],0x0
-			0x8D, 0x65, 0xFC,                         # lea    esp,[ebp-0x4]
+			0xC6, 0x83, 0x20, 0x01, 0x00, 0x00, 0x00, # mov    BYTE PTR [ebx+0x120], 0x0
+			0x8D, 0x65, 0xFC,                         # lea    esp, [ebp-0x4]
 			0x5B,                                     # pop    ebx
 			0x5D,                                     # pop    ebp
 			0xC3                                      # ret
@@ -47,7 +47,7 @@ class PatchScreenRes4(Patch):
 	description = 'Set default screen resolution to 4'
 	def patch(self):
 		# Replace the default resolution int of 2 with the max of 4.
-		self.fp.seek(0x347F2C)
+		self.fp.seek(0x347F2C) # 0x74A32C
 		self.fp.write(bytearray([
 			0x04
 		]))
@@ -56,11 +56,19 @@ class PatchScreenResINI(Patch):
 	name = 'screenresini'
 	description = 'Allow ini to control screen resolution'
 	def patch(self):
-		# Replace GcGraphicsOptions::GetScreenResolution call with constant 0.
+		# Replace GcGraphicsOptions::GetScreenResolution calls with constant 0.
 		# This will force switch default case and prevent overwriting values from INI.
-		self.fp.seek(0x13772D)
+
+		# The call in AppMain.
+		self.fp.seek(0x13772D) # 0x53832D
 		self.fp.write(bytearray([
-			0xB8, 0x00, 0x00, 0x00, 0x00 # mov    eax,0x0 
+			0xB8, 0x00, 0x00, 0x00, 0x00 # mov    eax, 0x0
+		]))
+
+		# The call in ScDrawableContext::Reset.
+		self.fp.seek(0x1585BA) # 0x5591BA
+		self.fp.write(bytearray([
+			0xB8, 0x00, 0x00, 0x00, 0x00 # mov    eax, 0x0
 		]))
 
 class PatchHVP(Patch):
@@ -75,9 +83,9 @@ class PatchHVP(Patch):
 
 		# Disable negative near and far clip on the camera in GcViewPort::GcViewPort.
 		# Replace GcGraphicsOptions::GetSVP call with constant 1.
-		self.fp.seek(0x470E0)
+		self.fp.seek(0x470E0) # 0x447CE0
 		self.fp.write(bytearray([
-			0xB0, 0x01, # mov    al,0x1
+			0xB0, 0x01, # mov    al, 0x1
 			0x90,       # nop
 			0x90,       # nop
 			0x90        # nop
@@ -85,9 +93,9 @@ class PatchHVP(Patch):
 
 		# Disable inverted view matrix in GcLegoCamera::BuildViewMatrix.
 		# Replace GcGraphicsOptions::GetSVP call with constant 1.
-		self.fp.seek(0x5A2A2)
+		self.fp.seek(0x5A2A2) # 0x45AEA2
 		self.fp.write(bytearray([
-			0xB0, 0x01, # mov    al,0x1
+			0xB0, 0x01, # mov    al, 0x1
 			0x90,       # nop
 			0x90,       # nop
 			0x90        # nop
@@ -95,9 +103,9 @@ class PatchHVP(Patch):
 
 		# Disable inverted fog values in GcAreaDirector::SetFog.
 		# Replace GcGraphicsOptions::GetSVP call with constant 1.
-		self.fp.seek(0x89BA7)
+		self.fp.seek(0x89BA7) # 0x48A7A7
 		self.fp.write(bytearray([
-			0xB0, 0x01, # mov    al,0x1
+			0xB0, 0x01, # mov    al, 0x1
 			0x90,       # nop
 			0x90,       # nop
 			0x90        # nop
@@ -105,9 +113,9 @@ class PatchHVP(Patch):
 
 		# Disable inverted projection matrix in ScPerspectiveCamera::BuildProjectionMatrix.
 		# Replace GcGraphicsOptions::GetSVP call with constant 1.
-		self.fp.seek(0x94866)
+		self.fp.seek(0x94866) # 0x495466
 		self.fp.write(bytearray([
-			0xB0, 0x01, # mov    al,0x1
+			0xB0, 0x01, # mov    al, 0x1
 			0x90,       # nop
 			0x90,       # nop
 			0x90        # nop
@@ -115,7 +123,7 @@ class PatchHVP(Patch):
 
 		# Replace float sign inversion in GcGraphicsOptions::GetDrawDistance.
 		# Prevents negative draw distance, resulting in an infinite far clip.
-		self.fp.seek(0x1E46E6)
+		self.fp.seek(0x1E46E6) # 0x5E52E6
 		self.fp.write(bytearray([
 			0x90, # nop
 			0x90  # nop
@@ -123,7 +131,7 @@ class PatchHVP(Patch):
 
 		# Replace PI float with 0.0 in ScMatrix::RotateZ(PI) of GcSprite:Render.
 		# Stop 2D sprites from being being flipped upside down.
-		self.fp.seek(0x32D090)
+		self.fp.seek(0x32D090) # 0x72F490
 		self.fp.write(bytearray([
 			0x00, 0x00, 0x00, 0x00 # float 0.0
 		]))
