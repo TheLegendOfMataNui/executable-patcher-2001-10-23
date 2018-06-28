@@ -12,6 +12,13 @@ import sys
 import inspect
 import argparse
 
+def nop_pad(data, length):
+	l = len(data)
+	pad = length - l
+	if pad < 0:
+		raise Exception('Longer than padded length: %s > %s' % (l, length))
+	return data + ([0x90] * pad)
+
 class Patch():
 	def __init__(self, fp):
 		self.fp = fp
@@ -56,20 +63,33 @@ class PatchScreenResINI(Patch):
 	name = 'screenresini'
 	description = 'Allow ini to control screen resolution'
 	def patch(self):
-		# Replace GcGraphicsOptions::GetScreenResolution calls with constant 0.
+		# Replace GcGraphicsOptions::GetScreenResolution call in AppMain with constant 0.
 		# This will force switch default case and prevent overwriting values from INI.
-
-		# The call in AppMain.
 		self.fp.seek(0x13772D) # 0x53832D
 		self.fp.write(bytearray([
 			0xB8, 0x00, 0x00, 0x00, 0x00 # mov    eax, 0x0
 		]))
 
-		# The call in ScDrawableContext::Reset.
-		self.fp.seek(0x1585BA) # 0x5591BA
-		self.fp.write(bytearray([
-			0xB8, 0x00, 0x00, 0x00, 0x00 # mov    eax, 0x0
-		]))
+		# Replace GcGraphicsOptions::GetScreenResolution switch statement in ScDrawableContext::Reset.
+		# Instead call GcSaver::GetScreenData with the 7 required pointer arguments.
+		# For the last 5 arguemnts, use a stack address that will be overwritten after this call.
+		# For the first 2 arguemnts, pass the address of the height and width.
+		# This code is somewhat unconventional and may look odd when run through a pseudocode generator.
+		self.fp.seek(0x1585D0) # 0x5591D0
+		self.fp.write(bytearray(nop_pad([
+			0x8D, 0x85, 0x48, 0xFF, 0xFF, 0xFF, # lea     eax, [ebp-0xB8]
+			0x50,                               # push    eax
+			0x50,                               # push    eax
+			0x50,                               # push    eax
+			0x50,                               # push    eax
+			0x50,                               # push    eax
+			0x8D, 0x85, 0x44, 0xFF, 0xFF, 0xFF, # lea     eax, [ebp-0xBC]
+			0x50,                               # push    eax
+			0x8D, 0x85, 0x40, 0xFF, 0xFF, 0xFF, # lea     eax, [ebp-0xC0]
+			0x50,                               # push    eax
+			0xE8, 0x92, 0xBE, 0x07, 0x00,       # call    ?GetScreenData@GcSaver@@SAXAAG0AAE1111@Z
+			0x83, 0xC4, 0x1C                    # add     esp, 0x1C
+		], 0x6A)))
 
 class PatchHVP(Patch):
 	name = 'hvp'
