@@ -72,8 +72,8 @@ class PatchScreenResINI(Patch):
 
 		# Replace GcGraphicsOptions::GetScreenResolution switch statement in ScDrawableContext::Reset.
 		# Instead call GcSaver::GetScreenData with the 7 required pointer arguments.
-		# For the last 5 arguemnts, use a stack address that will be overwritten after this call.
-		# For the first 2 arguemnts, pass the address of the height and width.
+		# For the last 5 arguments, use a stack address that will be overwritten after this call.
+		# For the first 2 arguments, pass the address of the height and width.
 		# This code is somewhat unconventional and may look odd when run through a pseudocode generator.
 		self.fp.seek(0x1585D0) # 0x5591D0
 		self.fp.write(bytearray(nop_pad([
