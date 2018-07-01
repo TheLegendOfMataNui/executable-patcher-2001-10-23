@@ -212,7 +212,7 @@ def main():
 
 	parser = argparse.ArgumentParser(
 		description=os.linesep.join([
-			'TLOMN Build 2001-10-22 Patcher',
+			'TLOMN Build 2001-10-23 Patcher',
 			'Version: 1.2.0'
 		]),
 		epilog=os.linesep.join([
