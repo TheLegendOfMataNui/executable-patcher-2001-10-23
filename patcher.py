@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 BIONICLE: The Legend of Mata Nui Executable Patcher for build 2001-10-23
-Version: 1.2.0
+Version: 1.3.0
 
 Copyright (c) 2018 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
@@ -213,7 +213,7 @@ def main():
 	parser = argparse.ArgumentParser(
 		description=os.linesep.join([
 			'TLOMN Build 2001-10-23 Patcher',
-			'Version: 1.2.0'
+			'Version: 1.3.0'
 		]),
 		epilog=os.linesep.join([
 			'patches:',
