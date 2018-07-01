@@ -96,7 +96,7 @@ class PatchHVP(Patch):
 	description = 'Hardward vertex processing'
 	def patch(self):
 		# By default the game attempts to draw with a negative near and far clip.
-		# This does not work on any known graphics cards and is apprently very wrong.
+		# This does not work on any known graphics cards and is apparently very wrong.
 		# This patch disables all the world inverting things that relate to this.
 		# In Alpha 0.006 most of these changes were side effects to enabling SVP.
 		# Essentially this patch corrects hardware vertex processing mode.
