@@ -37,6 +37,7 @@ patches:
   screenres4            Set default screen resolution to 4
   hvp                   Hardward vertex processing
   win10                 Windows 10
+  matoranrgb            Fix RGB values for Onu Matoran
 
 Copyright (c) 2018 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
