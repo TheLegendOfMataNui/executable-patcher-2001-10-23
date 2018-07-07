@@ -53,7 +53,7 @@ class PatchMatoranRGB(Patch):
 	name = 'matoranrgb'
 	description = 'Fix RGB values for Onu Matoran'
 	def patch(self):
-		self.fp.seek(0x0000B6F4)
+		self.fp.seek(0xB6F4)
 		self.fp.write(bytearray([
 			0x27, 0x6A, 0x26, 0x6A, 0x27
 		]))
