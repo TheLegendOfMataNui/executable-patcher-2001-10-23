@@ -51,11 +51,14 @@ class PatchWin10(Patch):
 
 class PatchMatoranRGB(Patch):
 	name = 'matoranrgb'
-	description = 'Fix RGB values for Onu Matoran'
+	description = 'Fix RGB values for Onu-Matoran'
 	def patch(self):
-		self.fp.seek(0xB6F4)
+		# Change RGB values from the Onu-Matoran for textures.
+		self.fp.seek(0xB6F3) # 0x40C2F3
 		self.fp.write(bytearray([
-			0x27, 0x6A, 0x26, 0x6A, 0x27
+			0x6A, 0x27, # push   0x27
+			0x6A, 0x27, # push   0x27
+			0x6A, 0x27  # push   0x27
 		]))
 
 class PatchScreenRes4(Patch):
