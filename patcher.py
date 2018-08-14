@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 BIONICLE: The Legend of Mata Nui Executable Patcher for build 2001-10-23
-Version: 1.4.0
+Version: 1.5.0
 
 Copyright (c) 2018 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
@@ -59,6 +59,16 @@ class PatchMatoranRGB(Patch):
 			0x6A, 0x27, # push   0x27
 			0x6A, 0x27, # push   0x27
 			0x6A, 0x27  # push   0x27
+		]))
+
+class PatchSoundTableAmount(Patch):
+	name = 'soundtableamount'
+	description = 'Avoid SoundTable error message'
+	def patch(self):
+		# Change expected amount of SoundTable entries to avoid error message.
+		self.fp.seek(0x1CC4B4) # 0x5CD0B4
+		self.fp.write(bytearray([
+			0x81, 0xBD, 0xD4, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		]))
 
 class PatchScreenRes4(Patch):
@@ -225,7 +235,7 @@ def main():
 	parser = argparse.ArgumentParser(
 		description=os.linesep.join([
 			'TLOMN Build 2001-10-23 Patcher',
-			'Version: 1.4.0'
+			'Version: 1.5.0'
 		]),
 		epilog=os.linesep.join([
 			'patches:',
