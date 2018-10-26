@@ -210,6 +210,7 @@ def patches_list():
 		if not hasattr(v, 'description'):
 			continue
 		r.append(v)
+	r.sort(key=lambda v: v.name)
 	return r
 
 def patches_filtered(enabled, disabled):
