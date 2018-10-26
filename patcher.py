@@ -178,6 +178,22 @@ class PatchHVP(Patch):
 			0x00, 0x00, 0x00, 0x00 # float 0.0
 		]))
 
+class PatchDragonMelee(Patch):
+	name = 'dragonmelee'
+	description = 'Dragon melee attack fix'
+	def patch(self):
+		# Patch GcToa::CheckNearCharacters to have a special case for the dragon id 'drag'.
+		# There is no Tahu-specific code in GcToa::UseSpecialAttack, it uses GcToa::StandardCloseAttack.
+		# That uses GcToa::CheckNearCharacters, which only considers characters with 'aiin' controllers.
+		# The dragon doesn't have one, and one cannot be added, so a special case is needed.
+		# Fortunately there are precisely 10 bytes of redundant code in just the right place for it.
+		self.fp.seek(0x16DE25) # 0x56EA25
+		self.fp.write(bytearray([
+			0x8B, 0x45, 0xD0,             # mov    eax, [ebp-0x30]
+			0x3D, 0x67, 0x61, 0x72, 0x64, # cmp    eax, 0x64726167 ; 'drag'
+			0x74, 0x26                    # je     0x28 
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
