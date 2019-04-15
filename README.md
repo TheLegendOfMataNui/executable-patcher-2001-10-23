@@ -36,6 +36,7 @@ patches:
   dragonmelee           Dragon melee attack fix
   hvp                   Hardward vertex processing
   matoranrgb            Fix RGB values for Onu-Matoran
+  rockbosshitpoints     Rock boss hit points crash fix
   screenres4            Set default screen resolution to 4
   screenresini          Allow ini to control screen resolution
   soundtableamount      Avoid SoundTable error message

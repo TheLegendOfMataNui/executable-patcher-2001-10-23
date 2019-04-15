@@ -194,6 +194,21 @@ class PatchDragonMelee(Patch):
 			0x74, 0x26                    # je     0x28 
 		]))
 
+class PatchRockBossHitPoints(Patch):
+	name = 'rockbosshitpoints'
+	description = 'Rock boss hit points crash fix'
+	def patch(self):
+		# Patch GcRockBoss::Ouch to not call GcBossMeter::DecMeter when no hit points still remain.
+		# This leads to trying to remove life a counter sprite that do not exist.
+		self.fp.seek(0x24D7C6) # 0x64E3C6
+		self.fp.write(bytearray([
+			0x90,       # nop
+			0x90,       # nop
+			0x90,       # nop
+			0x90,       # nop
+			0x90        # nop
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
