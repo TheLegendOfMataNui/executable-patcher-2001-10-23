@@ -209,6 +209,40 @@ class PatchRockBossHitPoints(Patch):
 			0x90        # nop
 		]))
 
+class PatchRockBossDamage(Patch):
+	name = 'rockbossdamage'
+	description = 'Rock boss always vulnerable and hurt when toa is hurt fix'
+	def patch(self):
+		# Patch GcRockBoss::HandleEvent to have the correct logic for who gets hurt when.
+		# The boss should only get hurt while in state 7 (roar state).
+
+		# Reorder a few instructions to move the eax assignment before the first cmp.
+		# That way it can be used in both branches, without needed extra space.
+		self.fp.seek(0x24D43F) # 0x64E03F
+		self.fp.write(bytearray([
+			0x0F, 0xB7, 0x86, 0x6E, 0x03, 0x00, 0x00, # movzx  eax, WORD PTR [esi+0x36e]
+			0x39, 0xD1,                               # cmp    ecx, edx
+			0x75, 0x1C                                # jne    0x1E
+		]))
+
+		# If eax is 8 jump to block end, not the player branch.
+		self.fp.seek(0x24D44F) # 0x64E04F
+		self.fp.write(bytearray([
+			0x75, 0x54 # jne    0x56
+		]))
+
+		# Rewrite this section to add in a branch, if eax is not 7 jump to block end.
+		# To make room for it compress 2 |= assignments to an offset into 1 (0x1 | 0x4 = 0x5).
+		# Padded out with nops to align with the original bytes.
+		self.fp.seek(0x24D466) # 0x64E066
+		self.fp.write(bytearray([
+			0x3D, 0x07, 0x00, 0x00, 0x00,                        # cmp    eax, 0x7
+			0x75, 0x38,                                          # jne    0x3F
+			0x90,                                                # nop
+			0x90,                                                # nop
+			0x66, 0x81, 0x8E, 0x6C, 0x03, 0x00, 0x00, 0x05, 0x00 # or     WORD PTR [esi+0x36c], 0x5
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
