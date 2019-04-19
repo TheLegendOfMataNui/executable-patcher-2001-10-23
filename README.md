@@ -38,6 +38,7 @@ patches:
   matoranrgb            Fix RGB values for Onu-Matoran
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
   rockbosshitpoints     Rock boss hit points crash fix
+  rockbossraindeath     Rock boss death by elemental power rain fix
   screenres4            Set default screen resolution to 4
   screenresini          Allow ini to control screen resolution
   soundtableamount      Avoid SoundTable error message

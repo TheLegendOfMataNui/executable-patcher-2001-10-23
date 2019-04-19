@@ -243,6 +243,24 @@ class PatchRockBossDamage(Patch):
 			0x66, 0x81, 0x8E, 0x6C, 0x03, 0x00, 0x00, 0x05, 0x00 # or     WORD PTR [esi+0x36c], 0x5
 		]))
 
+class PatchRockBossRainDeath(Patch):
+	name = 'rockbossraindeath'
+	description = 'Rock boss death by elemental power rain fix'
+	def patch(self):
+		# Patch GcGlyph::ProcessRain to have a special case for the rock boss id 'stnr'.
+		# Fortunately there is a lot of redundant code we can overwrite to add this condition.
+		# Move the edx assignment up over an unused eax assignment, then put condition over unused variables.
+		self.fp.seek(0x21E716) # 0x61F316
+		self.fp.write(bytearray([
+			0x8B, 0x16,                         # mov    edx, DWORD PTR [esi]
+			0x81, 0xFA, 0x72, 0x6E, 0x74, 0x73, # cmp    edx, 0x73746e72 ; 'stnr'
+			0x0F, 0x84, 0x77, 0x01, 0x00, 0x00, # je     0x185
+			0x90,                               # nop
+			0x90,                               # nop
+			0x90,                               # nop
+			0x90                                # nop
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
