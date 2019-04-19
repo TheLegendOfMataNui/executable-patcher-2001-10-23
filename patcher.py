@@ -191,7 +191,7 @@ class PatchDragonMelee(Patch):
 		self.fp.write(bytearray([
 			0x8B, 0x45, 0xD0,             # mov    eax, [ebp-0x30]
 			0x3D, 0x67, 0x61, 0x72, 0x64, # cmp    eax, 0x64726167 ; 'drag'
-			0x74, 0x26                    # je     0x28 
+			0x74, 0x26                    # je     0x28
 		]))
 
 class PatchRockBossHitPoints(Patch):
