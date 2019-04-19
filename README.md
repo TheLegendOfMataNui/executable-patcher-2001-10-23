@@ -20,7 +20,7 @@ Always run this script on an unmodified copy of the original file as it does not
 usage: patcher.py [-h] [-e ENABLED | -d DISABLED] file
 
 TLOMN Build 2001-10-23 Patcher
-Version: 1.8.0
+Version: 1.9.0
 
 positional arguments:
   file                  File to be patched
