@@ -36,6 +36,7 @@ patches:
   dragonmelee           Dragon melee attack fix
   hvp                   Hardward vertex processing
   matoranrgb            Fix RGB values for Onu-Matoran
+  patchpickupsnapping   Patch pick up snapping to disable snapping to terrain
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
   rockbosshitpoints     Rock boss hit points crash fix
   rockbossraindeath     Rock boss death by elemental power rain fix

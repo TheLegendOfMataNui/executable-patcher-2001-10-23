@@ -261,6 +261,16 @@ class PatchRockBossRainDeath(Patch):
 			0x90                                # nop
 		]))
 
+class PatchPickupSnapping(Patch):
+	name = 'patchpickupsnapping'
+	description = 'Patch pick up snapping to disable snapping to terrain'
+	def patch(self):
+		# Patch GcAnimSprite::Drop to have a terrain snapping distance of 0.0.
+		self.fp.seek(0x3061B8) # 0x7085B8
+		self.fp.write(bytearray([
+			0x00, 0x00, 0x00, 0x00 # float 0.0
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
