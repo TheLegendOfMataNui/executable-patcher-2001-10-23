@@ -71,6 +71,26 @@ class PatchSoundTableAmount(Patch):
 			0x81, 0xBD, 0xD4, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		]))
 
+class PatchSoundCacheRemove(Patch):
+	name = 'soundcacheremove'
+	description = 'Avoid sound cache use-after-free error by removing on Gc3DSound destructor'
+	def patch(self):
+		self.fp.seek(0x15DFE2) # 0x55EBE2
+		self.fp.write(bytearray([
+			# Patch Gc3DSound::~Gc3DSound to call Gc3DSound::UnregisterCacheUse on this.
+			# The compiler would reset ecx with `mov ecx, ebx` hoever ecx is already set.
+			# This is fortunate because there are only 6 bytes of padding to work with.
+			# A little unconventional and may look odd when run through a pseudocode generator.
+			0x51,                         # push   ecx
+			0xE8, 0x08, 0x28, 0x00, 0x00, # call   Gc3DSound::UnregisterCacheUse
+			# Existing code, shifted down.
+			0x89, 0xD8,                   # mov    eax, ebx
+			0x8D, 0x65, 0xFC,             # lea    esp, [ebp-0x4]
+			0x5B,                         # pop    ebx
+			0x5D,                         # pop    ebp
+			0xC3                          # ret
+		]))
+
 class PatchScreenRes4(Patch):
 	name = 'screenres4'
 	description = 'Set default screen resolution to 4'

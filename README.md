@@ -42,6 +42,7 @@ patches:
   rockbossraindeath     Rock boss death by elemental power rain fix
   screenres4            Set default screen resolution to 4
   screenresini          Allow ini to control screen resolution
+  soundcacheremove      Avoid sound cache use-after-free error by removing on Gc3DSound destructor
   soundtableamount      Avoid SoundTable error message
   win10                 Windows 10
 
