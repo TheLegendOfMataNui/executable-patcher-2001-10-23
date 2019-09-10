@@ -91,6 +91,34 @@ class PatchSoundCacheRemove(Patch):
 			0xC3                          # ret
 		]))
 
+class PatchHunaAIController(Patch):
+	name = 'hunaaicontroller'
+	description = 'Avoid null pointer error on characters without an AI controller with Huna'
+	def patch(self):
+		self.fp.seek(0x80238) # 0x480E38
+		self.fp.write(bytearray([
+			# Existing code, minus some dead code, shifted up with relative jumps fixed.
+			# The dead code was removed to make room for some new code.
+			0x74, 0x1C,                         # je      0x1e
+			0x8B, 0x15, 0x50, 0x8B, 0x83, 0x00, # mov     edx, DWORD PTR ds:0x838b50
+			0x89, 0x55, 0xF0,                   # mov     DWORD PTR [ebp-0x10], edx
+			0x8B, 0x48, 0x04,                   # mov     ecx, DWORD PTR [eax+0x4]
+			0x8B, 0x55, 0xF0,                   # mov     edx, DWORD PTR [ebp-0x10]
+			0x39, 0xD1,                         # cmp     ecx, edx
+			0x0F, 0x94, 0xC0,                   # sete    al
+			0x84, 0xC0,                         # test    al, al
+			0x74, 0x04,                         # je      0x1e
+			0xC6, 0x45, 0xE4, 0x01,             # mov     BYTE PTR [ebp-0x1c], 0x1
+			0x80, 0x7D, 0xE4, 0x00,             # cmp     BYTE PTR [ebp-0x1c], 0x0
+			0x74, 0x14,                         # je      0x38
+			0x8B, 0x8F, 0x4C, 0x01, 0x00, 0x00, # mov     ecx, DWORD PTR [edi+0x14c]
+			# Only call GcCharacterAIController::SetIgnoreToa if GcCharacter has a GcCharacterAIController.
+			# If the pointer is null, jump over it.
+			0x85, 0xC9,                         # test    ecx,ecx
+			0x74, 0x0A,                         # je      0xe
+			0x90                                # nop
+		]))
+
 class PatchScreenRes4(Patch):
 	name = 'screenres4'
 	description = 'Set default screen resolution to 4'

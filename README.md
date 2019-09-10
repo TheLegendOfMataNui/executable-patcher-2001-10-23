@@ -34,6 +34,7 @@ optional arguments:
 
 patches:
   dragonmelee           Dragon melee attack fix
+  hunaaicontroller      Avoid null pointer error on characters without an AI controller with Huna
   hvp                   Hardward vertex processing
   matoranrgb            Fix RGB values for Onu-Matoran
   patchpickupsnapping   Patch pick up snapping to disable snapping to terrain
