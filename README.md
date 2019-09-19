@@ -46,6 +46,7 @@ patches:
   soundcacheremove      Avoid sound cache use-after-free error by removing on Gc3DSound destructor
   soundtableamount      Avoid SoundTable error message
   win10                 Windows 10
+  windbossmovetoa       Wind boss move toa attack and release fix
 
 Copyright (c) 2018-2019 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0

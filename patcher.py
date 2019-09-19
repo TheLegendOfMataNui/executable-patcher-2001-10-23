@@ -309,6 +309,21 @@ class PatchRockBossRainDeath(Patch):
 			0x90                                # nop
 		]))
 
+class PatchWindBossMoveToa(Patch):
+	name = 'windbossmovetoa'
+	description = 'Wind boss move toa attack and release fix'
+	def patch(self):
+		# Patch GcWindBoss::MoveToaTo to ignore Y axis when calling SrDistanceBetweenPoints.
+		# At higher framerates this function struggles to move the Toa close enough to the targets.
+		# It also does not adjust the Toa's Y axis to correct for any small errors.
+		# If the Toa is not at just the right height, it struggles to be close enough to count.
+		# At higher framerates, which increase the number of rounding errors, this is an issue.
+		# This patch simply ignores the Y axis when checking if close enough to the bone.
+		self.fp.seek(0x23C627) # 0x63D227
+		self.fp.write(bytearray([
+			0x6A, 0x01 # push 1
+		]))
+
 class PatchPickupSnapping(Patch):
 	name = 'patchpickupsnapping'
 	description = 'Patch pick up snapping to disable snapping to terrain'
