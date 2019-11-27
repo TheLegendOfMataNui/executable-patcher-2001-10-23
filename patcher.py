@@ -325,7 +325,7 @@ class PatchWindBossMoveToa(Patch):
 		]))
 
 class PatchPickupSnapping(Patch):
-	name = 'patchpickupsnapping'
+	name = 'pickupsnapping'
 	description = 'Patch pick up snapping to disable snapping to terrain'
 	def patch(self):
 		# Patch GcAnimSprite::Drop to have a terrain snapping distance of 0.0.
