@@ -20,7 +20,7 @@ Always run this script on an unmodified copy of the original file as it does not
 usage: patcher.py [-h] [-e ENABLED | -d DISABLED] file
 
 TLOMN Build 2001-10-23 Patcher
-Version: 1.13.0
+Version: 1.14.0
 
 positional arguments:
   file                  File to be patched
@@ -34,10 +34,11 @@ optional arguments:
 
 patches:
   dragonmelee           Dragon melee attack fix
+  frenchcharacter       Patch character for the French language
   hunaaicontroller      Avoid null pointer error on characters without an AI controller with Huna
   hvp                   Hardward vertex processing
   matoranrgb            Fix RGB values for Onu-Matoran
-  patchpickupsnapping   Patch pick up snapping to disable snapping to terrain
+  pickupsnapping        Patch pick up snapping to disable snapping to terrain
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
   rockbosshitpoints     Rock boss hit points crash fix
   rockbossraindeath     Rock boss death by elemental power rain fix
