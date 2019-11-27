@@ -334,6 +334,16 @@ class PatchPickupSnapping(Patch):
 			0x00, 0x00, 0x00, 0x00 # float 0.0
 		]))
 
+class PatchFrenchCharacter(Patch):
+	name = 'frenchcharacter'
+	description = 'Patch character for the French language'
+	def patch(self):
+		# Patch GcStringTableLoader::CleanString to replace 0x86 with 0xC8.
+		self.fp.seek(0x1E8D97) # 0x5E9997
+		self.fp.write(bytearray([
+			0xC8 # Byte 0xC8
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
