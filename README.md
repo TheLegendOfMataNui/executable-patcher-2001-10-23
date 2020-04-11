@@ -42,6 +42,7 @@ patches:
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
   rockbosshitpoints     Rock boss hit points crash fix
   rockbossraindeath     Rock boss death by elemental power rain fix
+  savequit              Patch to prevent save corrupting save on quit code
   screenres4            Set default screen resolution to 4
   screenresini          Allow ini to control screen resolution
   soundcacheremove      Avoid sound cache use-after-free error by removing on Gc3DSound destructor
@@ -49,7 +50,7 @@ patches:
   win10                 Windows 10
   windbossmovetoa       Wind boss move toa attack and release fix
 
-Copyright (c) 2018-2019 JrMasterModelBuilder
+Copyright (c) 2018-2020 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 ```
 
@@ -73,6 +74,6 @@ If you find a bug or have compatibility issues, please open a ticket under issue
 
 ## License
 
-Copyright (c) 2018-2019 JrMasterModelBuilder
+Copyright (c) 2018-2020 JrMasterModelBuilder
 
 Licensed under the Mozilla Public License, v. 2.0

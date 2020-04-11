@@ -3,7 +3,7 @@
 BIONICLE: The Legend of Mata Nui Executable Patcher for build 2001-10-23
 Version: 1.14.0
 
-Copyright (c) 2018-2019 JrMasterModelBuilder
+Copyright (c) 2018-2020 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 """
 
@@ -344,6 +344,20 @@ class PatchFrenchCharacter(Patch):
 			0xC8 # Byte 0xC8
 		]))
 
+class PatchSaveQuit(Patch):
+	name = 'savequit'
+	description = 'Patch to prevent save corrupting save on quit code'
+	def patch(self):
+		# Patch GcGame::QuitGame to not call GcSaver::Save itself.
+		self.fp.seek(0x3A2DA) # 0x43AEDA
+		self.fp.write(bytearray([
+			0x90,       # nop
+			0x90,       # nop
+			0x90,       # nop
+			0x90,       # nop
+			0x90        # nop
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
@@ -408,7 +422,7 @@ def main():
 			'patches:',
 			os.linesep.join(patches_help),
 			'',
-			'Copyright (c) 2018-2019 JrMasterModelBuilder',
+			'Copyright (c) 2018-2020 JrMasterModelBuilder',
 			'Licensed under the Mozilla Public License, v. 2.0'
 		]),
 		formatter_class=argparse.RawTextHelpFormatter
