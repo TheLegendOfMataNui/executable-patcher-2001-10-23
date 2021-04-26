@@ -358,6 +358,25 @@ class PatchSaveQuit(Patch):
 			0x90        # nop
 		]))
 
+class PatchHiveRespawn(Patch):
+	name = 'hiverespawn'
+	description = 'Fixes flying Rahi respawning with walking AI'
+	def patch(self):
+		# Changes hives to call Reset instead of RecycleCreature on Rahi death.
+		self.fp.seek(0x12DEF) # 0x4139EF
+		self.fp.write(bytearray([
+			0x90,                        # nop
+			0xE8, 0x6B, 0x02, 0x21, 0x00 # call    ?Reset@GcHive@@QAEXXZ ; GcHive::Reset(void)
+		]))
+
+		# Removes hive health reset.
+		self.fp.seek(0x223189) # 0x623D8F
+		self.fp.write(bytearray([0x90] * 17)) # nop 17
+
+		# Removes hive health reset.
+		self.fp.seek(0x16AE7D) # 0x56BA7D
+		self.fp.write(bytearray([0x90] * 5))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
