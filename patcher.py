@@ -273,7 +273,7 @@ class PatchPauseToggle(Patch):
 		]))
 
 		# Patch WndClass_WindowProc to push and pop another argument.
-		# Also code gold the existing ASM to make enough room.
+		# Also code golf the existing ASM to make enough room.
 		self.fp.seek(0x1372D6) # 0x537ED6
 		self.fp.write(bytearray([
 			0xB8, 0xC8, 0x32, 0x70, 0x00,       # mov     eax, 0x7032C8
