@@ -20,7 +20,7 @@ Always run this script on an unmodified copy of the original file as it does not
 usage: patcher.py [-h] [-e ENABLED | -d DISABLED] file
 
 TLOMN Build 2001-10-23 Patcher
-Version: 1.15.0
+Version: 1.16.0
 
 positional arguments:
   file                  File to be patched
@@ -51,7 +51,7 @@ patches:
   win10                 Windows 10
   windbossmovetoa       Wind boss move toa attack and release fix
 
-Copyright (c) 2018-2021 JrMasterModelBuilder
+Copyright (c) 2018-2022 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 ```
 
@@ -75,6 +75,6 @@ If you find a bug or have compatibility issues, please open a ticket under issue
 
 ## License
 
-Copyright (c) 2018-2021 JrMasterModelBuilder
+Copyright (c) 2018-2022 JrMasterModelBuilder
 
 Licensed under the Mozilla Public License, v. 2.0
