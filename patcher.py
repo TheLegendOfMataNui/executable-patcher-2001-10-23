@@ -221,6 +221,7 @@ class PatchPauseToggle(Patch):
 		# The game is paused by the ESC key and ALT+TAB-ing out.
 		# When both are done, it toggles back to running.
 		# This patch makes it so that only the same pause reason can un-pause it.
+		# Uses the GcGame::sPauseGame boolean as a 8-bit integer (always compared to 0).
 
 		# Patch GcGame::PauseGame to take a second 8-bit integer.
 		# First shorten some jumps over alignment data to add room for some new logic.
@@ -248,7 +249,7 @@ class PatchPauseToggle(Patch):
 		]))
 
 		# Patch OSI gamefunc GcGame::PauseGame to push and pop another argument.
-		# Also ensure the return value is a boolean 0 or 1, as it is now a byte.
+		# Also ensure return value is a boolean 0 or 1, as the function now returns an 8-bit integer.
 		# The code is larger and rewrite the code after the changes, into alignment data.
 		self.fp.seek(0x35CE8) # 0x4368E8
 		self.fp.write(bytearray([
