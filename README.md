@@ -37,6 +37,7 @@ patches:
   frenchcharacter       Patch character for the French language
   hunaaicontroller      Avoid null pointer error on characters without an AI controller with Huna
   hvp                   Hardward vertex processing
+  pausetoggle           Pause double toggle fix
   matoranrgb            Fix RGB values for Onu-Matoran
   pickupsnapping        Patch pick up snapping to disable snapping to terrain
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
@@ -50,7 +51,7 @@ patches:
   win10                 Windows 10
   windbossmovetoa       Wind boss move toa attack and release fix
 
-Copyright (c) 2018-2020 JrMasterModelBuilder
+Copyright (c) 2018-2021 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 ```
 
@@ -74,6 +75,6 @@ If you find a bug or have compatibility issues, please open a ticket under issue
 
 ## License
 
-Copyright (c) 2018-2020 JrMasterModelBuilder
+Copyright (c) 2018-2021 JrMasterModelBuilder
 
 Licensed under the Mozilla Public License, v. 2.0

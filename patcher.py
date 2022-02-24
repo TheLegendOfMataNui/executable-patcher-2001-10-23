@@ -3,7 +3,7 @@
 BIONICLE: The Legend of Mata Nui Executable Patcher for build 2001-10-23
 Version: 1.15.0
 
-Copyright (c) 2018-2020 JrMasterModelBuilder
+Copyright (c) 2018-2021 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 """
 
@@ -212,6 +212,93 @@ class PatchHVP(Patch):
 		self.fp.seek(0x32D090) # 0x72F490
 		self.fp.write(bytearray([
 			0x00, 0x00, 0x00, 0x00 # float 0.0
+		]))
+
+class PatchPauseToggle(Patch):
+	name = 'pausetoggle'
+	description = 'Pause double toggle fix'
+	def patch(self):
+		# The game is paused by the ESC key and ALT+TAB-ing out.
+		# When both are done, it toggles back to running.
+		# This patch makes it so that only the same pause reason can un-pause it.
+
+		# Patch GcGame::PauseGame to take a second 8-bit integer.
+		# First shorten some jumps over alignment data to add room for some new logic.
+		self.fp.seek(0x3A318) # 0x43AF18
+		self.fp.write(bytearray([
+			0x75, 0x0F # jne     0x11
+		]))
+		self.fp.seek(0x3A31E) # 0x43AF1E
+		self.fp.write(bytearray([
+			0x75, 0x09 # jne     0x9
+		]))
+		# Second write new logic into the alignment data and over old logic.
+		self.fp.seek(0x3A329) # 0x43AF29
+		self.fp.write(bytearray([
+			0x8A, 0x15, 0xC4, 0x32, 0x70, 0x00, # mov     dl, BYTE PTR ds:0x7032C4 ; GcGame::sPauseGame
+			0x80, 0xFA, 0x00,                   # cmp     dl, 0x0
+			0x75, 0x05,                         # jne     0x7
+			0x8A, 0x55, 0x0C,                   # mov     dl, BYTE PTR [ebp+0xC]   ; arg2
+			0xEB, 0x07,                         # jmp     0x9
+			0x3A, 0x55, 0x0C,                   # cmp     dl, BYTE PTR [ebp+0xC]   ; arg2
+			0x75, 0x02,                         # jne     0x4
+			0x31, 0xD2,                         # xor     edx, edx
+			0x88, 0x15, 0xC4, 0x32, 0x70, 0x00, # mov     BYTE PTR ds:0x7032C4, dl ; GcGame::sPauseGame
+			0x80, 0xFA, 0x00                    # cmp     dl, 0x0
+		]))
+
+		# Patch OSI gamefunc GcGame::PauseGame to push and pop another argument.
+		# Also ensure the return value is a boolean 0 or 1, as it is now a byte.
+		# The code is larger and rewrite the code after the changes, into alignment data.
+		self.fp.seek(0x35CE8) # 0x4368E8
+		self.fp.write(bytearray([
+			0x6A, 0x01,                   # push    0x1
+			0x50,                         # push    eax
+			0xE8, 0x00, 0x46, 0x00, 0x00, # call    0x4608
+			0x59,                         # pop     ecx
+			0x59,                         # pop     ecx
+			0x84, 0xC0,                   # test    al, al
+			0x0F, 0x95, 0xC0,             # setne   al
+			0x0F, 0xB6, 0xC0,             # movzx   eax, al
+			0x50,                         # push    eax
+			0x8B, 0x45, 0x08,             # mov     eax, DWORD PTR [ebp+0x8]
+			0x50,                         # push    eax
+			0xE8, 0x2C, 0x16, 0xFD, 0xFF, # call    0xFFFD1648               ; CreateVariant(bool)
+			0x59,                         # pop     ecx
+			0x59,                         # pop     ecx
+			0x8B, 0x45, 0x08,             # mov     eax, DWORD PTR [ebp+0x8]
+			0x89, 0xEC,                   # mov     esp, ebp
+			0x5D,                         # pop     ebp
+			0xC3                          # ret
+		]))
+
+		# Patch WndClass_WindowProc to push and pop another argument.
+		# Also code gold the existing ASM to make enough room.
+		self.fp.seek(0x1372D6) # 0x537ED6
+		self.fp.write(bytearray([
+			0xB8, 0xC8, 0x32, 0x70, 0x00,       # mov     eax, 0x7032C8
+			0x80, 0x38, 0x00,                   # cmp     BYTE PTR [eax], 0x0
+			0x75, 0x19,                         # jne     0x23
+			0xC6, 0x00, 0x01,                   # mov     BYTE PTR [eax], 0x1
+			0x8B, 0x0D, 0x9C, 0x87, 0x83, 0x00, # mov     ecx, DWORD PTR ds:0x83879C
+			0xE8, 0x82, 0x55, 0x0A, 0x00,       # call    0xA559A
+			0x6A, 0x02,                         # push    0x2
+			0x6A, 0x01,                         # push    0x1
+			0xE8, 0xF9, 0x2F, 0xF0, 0xFF,       # call    0xFFF0301A
+			0x59                                # pop     ecx
+		]))
+		self.fp.seek(0x13730B) # 0x537F0B
+		self.fp.write(bytearray([
+			0xB8, 0xC8, 0x32, 0x70, 0x00,       # mov     eax,0x7032c8
+			0x80, 0x38, 0x00,                   # cmp     BYTE PTR [eax],0x0
+			0x74, 0x19,                         # je      0x23
+			0xC6, 0x00, 0x00,                   # mov     BYTE PTR [eax],0x0
+			0x8B, 0x0D, 0x9C, 0x87, 0x83, 0x00, # mov     ecx,DWORD PTR ds:0x83879c
+			0xE8, 0x1D, 0x55, 0x0A, 0x00,       # call    0xa5535
+			0x6A, 0x02,                         # push    0x2
+			0x6A, 0x01,                         # push    0x1
+			0xE8, 0xC4, 0x2F, 0xF0, 0xFF,       # call    0xfff02fe5
+			0x59                                # pop     ecx
 		]))
 
 class PatchDragonMelee(Patch):
@@ -429,7 +516,7 @@ def main():
 			'patches:',
 			os.linesep.join(patches_help),
 			'',
-			'Copyright (c) 2018-2020 JrMasterModelBuilder',
+			'Copyright (c) 2018-2021 JrMasterModelBuilder',
 			'Licensed under the Mozilla Public License, v. 2.0'
 		]),
 		formatter_class=argparse.RawTextHelpFormatter
