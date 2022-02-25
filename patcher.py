@@ -224,28 +224,28 @@ class PatchPauseToggle(Patch):
 		# Uses the GcGame::sPauseGame boolean as a 8-bit integer (always compared to 0).
 
 		# Patch GcGame::PauseGame to take a second 8-bit integer.
-		# First shorten some jumps over alignment data to add room for some new logic.
+		# First shorten one jump over alignment data to add room for some new logic.
 		self.fp.seek(0x3A318) # 0x43AF18
 		self.fp.write(bytearray([
-			0x75, 0x0F # jne     0x11
-		]))
-		self.fp.seek(0x3A31E) # 0x43AF1E
-		self.fp.write(bytearray([
-			0x75, 0x09 # jne     0x9
+			0x75, 0x06 # jne     0x8
 		]))
 		# Second write new logic into the alignment data and over old logic.
-		self.fp.seek(0x3A329) # 0x43AF29
+		self.fp.seek(0x3A31E) # 0x43AF1E
 		self.fp.write(bytearray([
+			0x74, 0x5F,                         # je      0x61
 			0x8A, 0x15, 0xC4, 0x32, 0x70, 0x00, # mov     dl, BYTE PTR ds:0x7032C4 ; GcGame::sPauseGame
 			0x80, 0xFA, 0x00,                   # cmp     dl, 0x0
-			0x75, 0x05,                         # jne     0x7
-			0x8A, 0x55, 0x0C,                   # mov     dl, BYTE PTR [ebp+0xC]   ; arg2
-			0xEB, 0x07,                         # jmp     0x9
+			0x74, 0x09,                         # je      0xb
 			0x3A, 0x55, 0x0C,                   # cmp     dl, BYTE PTR [ebp+0xC]   ; arg2
-			0x75, 0x02,                         # jne     0x4
+			0x75, 0x4F,                         # jne     0x51
 			0x31, 0xD2,                         # xor     edx, edx
-			0x88, 0x15, 0xC4, 0x32, 0x70, 0x00, # mov     BYTE PTR ds:0x7032C4, dl ; GcGame::sPauseGame
-			0x80, 0xFA, 0x00                    # cmp     dl, 0x0
+			0xEB, 0x03,                         # jmp     0x5
+			0x8A, 0x55, 0x0C,                   # mov     dl, BYTE PTR [ebp+0xC]   ; arg2
+			0x90,                               # nop
+			0x90,                               # nop
+			0x90,                               # nop
+			0x90,                               # nop
+			0x90                                # nop
 		]))
 
 		# Patch OSI gamefunc GcGame::PauseGame to push and pop another argument.
