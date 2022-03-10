@@ -151,7 +151,7 @@ class PatchScreenResINI(Patch):
 
 class PatchHVP(Patch):
 	name = 'hvp'
-	description = 'Hardward vertex processing'
+	description = 'Hardware vertex processing'
 	def patch(self):
 		# By default the game attempts to draw with a negative near and far clip.
 		# This does not work on any known graphics cards and is apparently very wrong.
@@ -410,14 +410,51 @@ class PatchPickupSnapping(Patch):
 			0x00, 0x00, 0x00, 0x00 # float 0.0
 		]))
 
-class PatchFrenchCharacter(Patch):
-	name = 'frenchcharacter'
-	description = 'Patch character for the French language'
+class PatchAllCharacters(Patch):
+	name = 'characterpatch'
+	description = 'Patch all the characters'
 	def patch(self):
-		# Patch GcStringTableLoader::CleanString to replace 0x86 with 0xC8.
-		self.fp.seek(0x1E8D97) # 0x5E9997
+		# For some reason, whatever causes the codes to be required resides somewhere within GcStringTableLoader::CleanString itself.
+		# By NOPing out all the calls to this function, any special character can be encoded within a single byte
+		self.fp.seek(0x1E7A9C) # 0x5E869C - GcStringTableLoader::InitStrings
 		self.fp.write(bytearray([
-			0xC8 # Byte 0xC8
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7B56) # 0x5E8756 - GcStringTableLoader::GetString
+		self.fp.write(bytearray([
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7C26) # 0x5E8826 - GcStringTableLoader::GetStringFloat
+		self.fp.write(bytearray([
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7D16) # 0x5E8916 - GcStringTableLoader::GetStringUInt
+		self.fp.write(bytearray([
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7E0A) # 0x5E8A0A - GcStringTableLoader::GetStringMax
+		self.fp.write(bytearray([
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
 		]))
 
 class PatchSaveQuit(Patch):
@@ -534,7 +571,7 @@ def main():
 		'-d',
 		'--disabled',
 		action='append',
-		help='No not apply listed patches'
+		help='Do not apply listed patches'
 	)
 
 	parser.add_argument(
