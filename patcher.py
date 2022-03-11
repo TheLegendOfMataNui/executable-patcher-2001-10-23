@@ -424,7 +424,7 @@ class PatchPickupSnapping(Patch):
 
 class PatchAllCharacters(Patch):
 	name = 'characterpatch'
-	description = 'Patch all the characters'
+	description = 'Patch all the text characters'
 	def patch(self):
 		# For some reason, whatever causes the codes to be required resides somewhere within GcStringTableLoader::CleanString itself.
 		# By NOPing out all the calls to this function, any special character can be encoded within a single byte
