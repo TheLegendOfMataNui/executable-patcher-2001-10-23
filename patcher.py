@@ -51,14 +51,85 @@ class PatchWin10(Patch):
 
 class PatchMatoranRGB(Patch):
 	name = 'matoranrgb'
-	description = 'Fix RGB values for Onu-Matoran'
+	description = 'Fix RGB values for matoran torsos and Kapuras red'
 	def patch(self):
-		# Change RGB values from the Onu-Matoran for textures.
+		# Altering RGB values within GcCharacter::SetTohunga due to the torsos being hardcoded per level.
+		# Change RGB values for Onu-Matoran torsos from 0, 0, 0, to 41, 41, 41.
 		self.fp.seek(0xB6F3) # 0x40C2F3
 		self.fp.write(bytearray([
-			0x6A, 0x27, # push   0x27
-			0x6A, 0x27, # push   0x27
-			0x6A, 0x27  # push   0x27
+			0x6A, 0x29, # push   0x29
+			0x6A, 0x29, # push   0x29
+			0x6A, 0x29  # push   0x29
+		]))
+		# Change RGB values for Ga-Matoran torsos from 72, 117, 174 to 25, 134, 189.
+		# For this we have to nop out some data and adjust the jump table offset to 
+		# give us the 3 bytes space to push the value we want
+		self.fp.seek(0xB73A) # 0x40C33A
+		self.fp.write(bytearray([
+			0x90,                         # nop  
+			0x90,                         # nop
+			0x90,                         # nop
+			0x68, 0xFF, 0x00, 0x00, 0x00, # push   0xFF 
+			0x68, 0xBD, 0x00, 0x00, 0x00, # push   0xBD  
+			0x68, 0x86, 0x00, 0x00, 0x00, # push   0x86
+			0x6A, 0x19                    # push   0x19
+		]))
+		# Adjust the jump address
+		self.fp.seek(0x2FC958) # 0x6FED58
+		self.fp.write(bytearray([
+			0x3D,                           
+		]))
+		# Change RGB values for Po-Matoran torsos from 222, 198, 123 to 173, 150, 99.
+		self.fp.seek(0xB78B) # 0x40C38B
+		self.fp.write(bytearray([
+			0x68, 0x63, 0x00, 0x00, 0x00, # push   0x63
+			0x68, 0x96, 0x00, 0x00, 0x00, # push   0x96
+			0x68, 0xAD                    # push   0xAD
+		]))
+		# Change RGB values for Le-Matoran torsos from 187, 231, 133 to 156, 210, 0.
+		self.fp.seek(0xB825) # 0x40C425
+		self.fp.write(bytearray([
+			0x68, 0x00, 0x00, 0x00, 0x00, # push   0x00
+			0x68, 0xD2, 0x00, 0x00, 0x00, # push   0xD2
+			0x68, 0x9C                    # push   0x9C
+		]))
+		# Change RGB values for Ta-Matoran torsos from 255, 0, 13 to 173, 0, 0.
+		self.fp.seek(0xB875) # 0x40C475
+		self.fp.write(bytearray([
+			0x6A, 0x00, # push   0x00
+			0x6A, 0x00, # push   0x00
+			0x68, 0xAD  # push   0xAD
+		]))
+		# This change is within GcCharacter::SetKapura as he has a dedicated function.
+		# Change RGB values for Kapura's mask, torso, and feet from 255, 0, 13 to 173, 0, 0.
+		self.fp.seek(0xB964) # 0x40C564
+		self.fp.write(bytearray([
+			0x6A, 0x00,                   # push   0x00
+			0x68, 0x00, 0x00, 0x00, 0x00, # push   0x00
+			0x68, 0xAD                    # push   0xAD
+		]))
+		self.fp.seek(0xB97D) # 0x40C57D
+		self.fp.write(bytearray([
+			0x6A, 0x00, # push   0x00
+			0x6A, 0x00, # push   0x00
+			0x68, 0xAD  # push   0xAD
+		]))
+		self.fp.seek(0xB993) # 0x40C593
+		self.fp.write(bytearray([
+			0x6A, 0x00, # push   0x00
+			0x6A, 0x00, # push   0x00
+			0x68, 0xAD  # push   0xAD
+		]))
+
+class PatchMatoranIDCheck(Patch):
+	name = 'matoranidcheck'
+	description = 'Avoid crash when running GcCharacter::SetTohunga on non-vlgr characters'
+	def patch(self):
+		# Change a jz to a jmp to bypass the ID check in GcCharacter::SetTohunga
+		# This prevents a crash and allows for usage on non-vlgr entities
+		self.fp.seek(0xB5FD) # 0x40C1FD
+		self.fp.write(bytearray([
+			0xEB  # jmp    short loc_40C22F
 		]))
 
 class PatchSoundTableAmount(Patch):
