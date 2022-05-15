@@ -499,41 +499,70 @@ class PatchAllCharacters(Patch):
 	def patch(self):
 		# For some reason, whatever causes the codes to be required resides somewhere within GcStringTableLoader::CleanString itself.
 		# By NOPing out all the calls to this function, any special character can be encoded within a single byte
-		self.fp.seek(0x1E7A9C) # 0x5E869C - GcStringTableLoader::InitStrings
+		self.fp.seek(0x1E7A93) # 0x5E8693 - GcStringTableLoader::InitStrings
 		self.fp.write(bytearray([
+			0x90, # nop (lea eax, [ebp+str])
 			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop (push eax)
+			0x90, # nop (mov ecx, edi)
+			0x90, # nop
+			0x90, # nop (call to the function)
 			0x90, # nop
 			0x90, # nop
 			0x90, # nop
 			0x90  # nop
 		]))
-		self.fp.seek(0x1E7B56) # 0x5E8756 - GcStringTableLoader::GetString
+		self.fp.seek(0x1E7B51) # 0x5E8751 - GcStringTableLoader::GetString
 		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+string])
 			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
 			0x90, # nop
 			0x90, # nop
 			0x90, # nop
 			0x90  # nop
 		]))
-		self.fp.seek(0x1E7C26) # 0x5E8826 - GcStringTableLoader::GetStringFloat
+		self.fp.seek(0x1E7C21) # 0x5E8821 - GcStringTableLoader::GetStringFloat
 		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+str])
 			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
 			0x90, # nop
 			0x90, # nop
 			0x90, # nop
 			0x90  # nop
 		]))
-		self.fp.seek(0x1E7D16) # 0x5E8916 - GcStringTableLoader::GetStringUInt
+		self.fp.seek(0x1E7D11) # 0x5E8911 - GcStringTableLoader::GetStringUInt
 		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+str])
 			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
 			0x90, # nop
 			0x90, # nop
 			0x90, # nop
 			0x90  # nop
 		]))
-		self.fp.seek(0x1E7E0A) # 0x5E8A0A - GcStringTableLoader::GetStringMax
+		self.fp.seek(0x1E7E05) # 0x5E8A05 - GcStringTableLoader::GetStringMax
 		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+str])
 			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
 			0x90, # nop
 			0x90, # nop
 			0x90, # nop
