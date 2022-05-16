@@ -493,6 +493,25 @@ class PatchPickupSnapping(Patch):
 			0x00, 0x00, 0x00, 0x00 # float 0.0
 		]))
 
+class PatchConvoAnimations(Patch):
+	name = 'convanimpatch'
+	description = 'Patch conversation animations to add more'
+	def patch(self):
+		# Patch GcConversationEngine::SetupFrame to allow more animation indexes with the bytes given
+		# This is simply a generalization of Saffire's earlier logic, which was to use 0 with 0, 25 with 1, 26 with 2, and so on
+		self.fp.seek(0x1BD946) # 0x5BE546
+		self.fp.write(bytearray([0x0C])) # changes comparison to compare with 0xC, allowing more conditions to get into the switch
+		self.fp.seek(0x1BD952) # 0x5BE552
+		self.fp.write(bytearray([0x00])) # changes comparison to use 0x0, making everything above it jump to the 'default' case
+		self.fp.seek(0x1BD954) # 0x5BE554
+		self.fp.write(bytearray([0x0B])) # changes relative jump for the 'default' case
+		self.fp.seek(0x1BD960) # 0x5BE560
+		self.fp.write(bytearray([
+			0x89, 0xD7, # mov edi, edx
+			0x83, 0xC7, 0x18 # add edi, 18h
+		]))
+
+
 class PatchAllCharacters(Patch):
 	name = 'characterpatch'
 	description = 'Patch all the text characters'
