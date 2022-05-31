@@ -500,7 +500,7 @@ class PatchConvoAnimations(Patch):
 		# Patch GcConversationEngine::SetupFrame to allow more animation indexes with the bytes given
 		# This is simply a generalization of Saffire's earlier logic, which was to use 0 with 0, 25 with 1, 26 with 2, and so on
 		self.fp.seek(0x1BD946) # 0x5BE546
-		self.fp.write(bytearray([0x0C])) # changes comparison to compare with 0xC, allowing more conditions to get into the switch
+		self.fp.write(bytearray([0x20])) # changes comparison to compare with 0x20, allowing more conditions to get into the switch
 		self.fp.seek(0x1BD952) # 0x5BE552
 		self.fp.write(bytearray([0x00])) # changes comparison to use 0x0, making everything above it jump to the 'default' case
 		self.fp.seek(0x1BD954) # 0x5BE554
