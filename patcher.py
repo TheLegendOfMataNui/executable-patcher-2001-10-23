@@ -49,6 +49,89 @@ class PatchWin10(Patch):
 			0xC3                                      # ret
 		]))
 
+class PatchMatoranRGB(Patch):
+	name = 'matoranrgb'
+	description = 'Fix RGB values for matoran torsos and Kapuras red'
+	def patch(self):
+		# Altering RGB values within GcCharacter::SetTohunga due to the torsos being hardcoded per level.
+		# Change RGB values for Onu-Matoran torsos from 0, 0, 0, to 41, 41, 41.
+		self.fp.seek(0xB6F3) # 0x40C2F3
+		self.fp.write(bytearray([
+			0x6A, 0x29, # push   0x29
+			0x6A, 0x29, # push   0x29
+			0x6A, 0x29  # push   0x29
+		]))
+		# Change RGB values for Ga-Matoran torsos from 72, 117, 174 to 25, 134, 189.
+		# For this we have to nop out some data and adjust the jump table offset to 
+		# give us the 3 bytes space to push the value we want
+		self.fp.seek(0xB73A) # 0x40C33A
+		self.fp.write(bytearray([
+			0x90,                         # nop  
+			0x90,                         # nop
+			0x90,                         # nop
+			0x68, 0xFF, 0x00, 0x00, 0x00, # push   0xFF 
+			0x68, 0xBD, 0x00, 0x00, 0x00, # push   0xBD  
+			0x68, 0x86, 0x00, 0x00, 0x00, # push   0x86
+			0x6A, 0x19                    # push   0x19
+		]))
+		# Adjust the jump address
+		self.fp.seek(0x2FC958) # 0x6FED58
+		self.fp.write(bytearray([
+			0x3D,                           
+		]))
+		# Change RGB values for Po-Matoran torsos from 222, 198, 123 to 173, 150, 99.
+		self.fp.seek(0xB78B) # 0x40C38B
+		self.fp.write(bytearray([
+			0x68, 0x63, 0x00, 0x00, 0x00, # push   0x63
+			0x68, 0x96, 0x00, 0x00, 0x00, # push   0x96
+			0x68, 0xAD                    # push   0xAD
+		]))
+		# Change RGB values for Le-Matoran torsos from 187, 231, 133 to 156, 210, 0.
+		self.fp.seek(0xB825) # 0x40C425
+		self.fp.write(bytearray([
+			0x68, 0x00, 0x00, 0x00, 0x00, # push   0x00
+			0x68, 0xD2, 0x00, 0x00, 0x00, # push   0xD2
+			0x68, 0x9C                    # push   0x9C
+		]))
+		# Change RGB values for Ta-Matoran torsos from 255, 0, 13 to 173, 0, 0.
+		self.fp.seek(0xB875) # 0x40C475
+		self.fp.write(bytearray([
+			0x6A, 0x00, # push   0x00
+			0x6A, 0x00, # push   0x00
+			0x68, 0xAD  # push   0xAD
+		]))
+		# This change is within GcCharacter::SetKapura as he has a dedicated function.
+		# Change RGB values for Kapura's mask, torso, and feet from 255, 0, 13 to 173, 0, 0.
+		self.fp.seek(0xB964) # 0x40C564
+		self.fp.write(bytearray([
+			0x6A, 0x00,                   # push   0x00
+			0x68, 0x00, 0x00, 0x00, 0x00, # push   0x00
+			0x68, 0xAD                    # push   0xAD
+		]))
+		self.fp.seek(0xB97D) # 0x40C57D
+		self.fp.write(bytearray([
+			0x6A, 0x00, # push   0x00
+			0x6A, 0x00, # push   0x00
+			0x68, 0xAD  # push   0xAD
+		]))
+		self.fp.seek(0xB993) # 0x40C593
+		self.fp.write(bytearray([
+			0x6A, 0x00, # push   0x00
+			0x6A, 0x00, # push   0x00
+			0x68, 0xAD  # push   0xAD
+		]))
+
+class PatchMatoranIDCheck(Patch):
+	name = 'matoranidcheck'
+	description = 'Avoid crash when running GcCharacter::SetTohunga on non-vlgr characters'
+	def patch(self):
+		# Change a jz to a jmp to bypass the ID check in GcCharacter::SetTohunga
+		# This prevents a crash and allows for usage on non-vlgr entities
+		self.fp.seek(0xB5FD) # 0x40C1FD
+		self.fp.write(bytearray([
+			0xEB  # jmp    short loc_40C22F
+		]))
+
 class PatchSoundTableAmount(Patch):
 	name = 'soundtableamount'
 	description = 'Avoid SoundTable error message'
@@ -151,7 +234,7 @@ class PatchScreenResINI(Patch):
 
 class PatchHVP(Patch):
 	name = 'hvp'
-	description = 'Hardward vertex processing'
+	description = 'Hardware vertex processing'
 	def patch(self):
 		# By default the game attempts to draw with a negative near and far clip.
 		# This does not work on any known graphics cards and is apparently very wrong.
@@ -410,14 +493,99 @@ class PatchPickupSnapping(Patch):
 			0x00, 0x00, 0x00, 0x00 # float 0.0
 		]))
 
-class PatchFrenchCharacter(Patch):
-	name = 'frenchcharacter'
-	description = 'Patch character for the French language'
+class PatchConvoAnimations(Patch):
+	name = 'convanimpatch'
+	description = 'Patch conversation animations to add more'
 	def patch(self):
-		# Patch GcStringTableLoader::CleanString to replace 0x86 with 0xC8.
-		self.fp.seek(0x1E8D97) # 0x5E9997
+		# Patch GcConversationEngine::SetupFrame to allow more animation indexes with the bytes given
+		# This is simply a generalization of Saffire's earlier logic, which was to use 0 with 0, 25 with 1, 26 with 2, and so on
+		self.fp.seek(0x1BD946) # 0x5BE546
+		self.fp.write(bytearray([0x20])) # changes comparison to compare with 0x20, allowing more conditions to get into the switch
+		self.fp.seek(0x1BD952) # 0x5BE552
+		self.fp.write(bytearray([0x00])) # changes comparison to use 0x0, making everything above it jump to the 'default' case
+		self.fp.seek(0x1BD954) # 0x5BE554
+		self.fp.write(bytearray([0x0B])) # changes relative jump for the 'default' case
+		self.fp.seek(0x1BD960) # 0x5BE560
 		self.fp.write(bytearray([
-			0xC8 # Byte 0xC8
+			0x89, 0xD7, # mov edi, edx
+			0x83, 0xC7, 0x18 # add edi, 18h
+		]))
+
+
+class PatchAllCharacters(Patch):
+	name = 'characterpatch'
+	description = 'Patch all the text characters'
+	def patch(self):
+		# For some reason, whatever causes the codes to be required resides somewhere within GcStringTableLoader::CleanString itself.
+		# By NOPing out all the calls to this function, any special character can be encoded within a single byte
+		self.fp.seek(0x1E7A93) # 0x5E8693 - GcStringTableLoader::InitStrings
+		self.fp.write(bytearray([
+			0x90, # nop (lea eax, [ebp+str])
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop (push eax)
+			0x90, # nop (mov ecx, edi)
+			0x90, # nop
+			0x90, # nop (call to the function)
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7B51) # 0x5E8751 - GcStringTableLoader::GetString
+		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+string])
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7C21) # 0x5E8821 - GcStringTableLoader::GetStringFloat
+		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+str])
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7D11) # 0x5E8911 - GcStringTableLoader::GetStringUInt
+		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+str])
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
+		]))
+		self.fp.seek(0x1E7E05) # 0x5E8A05 - GcStringTableLoader::GetStringMax
+		self.fp.write(bytearray([
+			0x90, # nop (push [ebp+str])
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop (mov ecx, esi)
+			0x90, # nop
+			0x90, # nop (call)
+			0x90, # nop
+			0x90, # nop
+			0x90, # nop
+			0x90  # nop
 		]))
 
 class PatchSaveQuit(Patch):
@@ -452,6 +620,78 @@ class PatchHiveRespawn(Patch):
 		# Removes hive health reset.
 		self.fp.seek(0x16AE7D) # 0x56BA7D
 		self.fp.write(bytearray([0x90] * 5))
+
+class PatchLoadingBarDots(Patch):
+	name = 'loadbardots'
+	description = 'Patch to swap out loading bar periods for specially made bar dots'
+	def patch(self):
+		# Patch strings used by GcAreaLoader::ShowLoadingBar to use new loading bar dots.
+		self.fp.seek(0x32741D) # 0x72981D
+		self.fp.write(bytearray([0xE3] * 1))
+
+		self.fp.seek(0x32741F) # 0x72981F
+		self.fp.write(bytearray([0xE3] * 2))
+
+		self.fp.seek(0x327422) # 0x729822
+		self.fp.write(bytearray([0xE3] * 3))
+
+		self.fp.seek(0x327426) # 0x729826
+		self.fp.write(bytearray([0xE3] * 4))
+
+		self.fp.seek(0x32742B) # 0x72982B
+		self.fp.write(bytearray([0xE3] * 5))
+
+		self.fp.seek(0x327431) # 0x729831
+		self.fp.write(bytearray([0xE3] * 6))
+
+		self.fp.seek(0x327438) # 0x729838
+		self.fp.write(bytearray([0xE3] * 7))
+
+		self.fp.seek(0x327440) # 0x729840
+		self.fp.write(bytearray([0xE3] * 8))
+
+		self.fp.seek(0x327449) # 0x729849
+		self.fp.write(bytearray([0xE3] * 9))
+
+		self.fp.seek(0x327453) # 0x729853
+		self.fp.write(bytearray([0xE3] * 10))
+
+		self.fp.seek(0x32745E) # 0x72985E
+		self.fp.write(bytearray([0xE3] * 11))
+
+		self.fp.seek(0x32746A) # 0x72986A
+		self.fp.write(bytearray([0xE3] * 12))
+
+		self.fp.seek(0x327477) # 0x729877
+		self.fp.write(bytearray([0xE3] * 13))
+
+		self.fp.seek(0x327485) # 0x729885
+		self.fp.write(bytearray([0xE3] * 14))
+
+		self.fp.seek(0x327494) # 0x729894
+		self.fp.write(bytearray([0xE3] * 15))
+
+		self.fp.seek(0x3274A4) # 0x7298A4
+		self.fp.write(bytearray([0xE3] * 16))
+
+class PatchGrappleFlyingFix(Patch):
+	name = 'grappleflyingfix'
+	description = 'Fixes the grapple flying bug'
+	def patch(self):
+        # nop the condition in GcMotionSystem::AddExternalMovement 
+        # The external movement is only processed when the character is moving down or not at all on the y-axis 
+        # Therefore to fix the flying glitch we are nop'ing this condition
+		self.fp.seek(0x17A8C0) # 0x57B4C0
+		self.fp.write(bytearray([
+			0x90,   # nop (jnz     short loc_57B506)
+			0x90    # nop 
+		]))
+
+		self.fp.seek(0x17A8C8) # 0x57B4C8
+		self.fp.write(bytearray([
+			0x90,   # nop (jz      short loc_57B506)
+			0x90    # nop 
+		]))
 
 def patches_list():
 	prefix = 'Patch'
@@ -534,7 +774,7 @@ def main():
 		'-d',
 		'--disabled',
 		action='append',
-		help='No not apply listed patches'
+		help='Do not apply listed patches'
 	)
 
 	parser.add_argument(
