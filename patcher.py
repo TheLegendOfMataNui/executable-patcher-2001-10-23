@@ -674,6 +674,25 @@ class PatchLoadingBarDots(Patch):
 		self.fp.seek(0x3274A4) # 0x7298A4
 		self.fp.write(bytearray([0xE3] * 16))
 
+class PatchGrappleFlyingFix(Patch):
+	name = 'grappleflyingfix'
+	description = 'Fixes the grapple flying bug'
+	def patch(self):
+        # nop the condition in GcMotionSystem::AddExternalMovement 
+        # The external movement is only processed when the character is moving down or not at all on the y-axis 
+        # Therefore to fix the flying glitch we are nop'ing this condition
+		self.fp.seek(0x17A8C0) # 0x57B4C0
+		self.fp.write(bytearray([
+			0x90,   # nop (jnz     short loc_57B506)
+			0x90    # nop 
+		]))
+
+		self.fp.seek(0x17A8C8) # 0x57B4C8
+		self.fp.write(bytearray([
+			0x90,   # nop (jz      short loc_57B506)
+			0x90    # nop 
+		]))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
