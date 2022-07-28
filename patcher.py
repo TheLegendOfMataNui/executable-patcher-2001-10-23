@@ -621,6 +621,59 @@ class PatchHiveRespawn(Patch):
 		self.fp.seek(0x16AE7D) # 0x56BA7D
 		self.fp.write(bytearray([0x90] * 5))
 
+class PatchLoadingBarDots(Patch):
+	name = 'loadbardots'
+	description = 'Patch to swap out loading bar periods for specially made bar dots'
+	def patch(self):
+		# Patch strings used by GcAreaLoader::ShowLoadingBar to use new loading bar dots.
+		self.fp.seek(0x32741D) # 0x72981D
+		self.fp.write(bytearray([0xE3] * 1))
+
+		self.fp.seek(0x32741F) # 0x72981F
+		self.fp.write(bytearray([0xE3] * 2))
+
+		self.fp.seek(0x327422) # 0x729822
+		self.fp.write(bytearray([0xE3] * 3))
+
+		self.fp.seek(0x327426) # 0x729826
+		self.fp.write(bytearray([0xE3] * 4))
+
+		self.fp.seek(0x32742B) # 0x72982B
+		self.fp.write(bytearray([0xE3] * 5))
+
+		self.fp.seek(0x327431) # 0x729831
+		self.fp.write(bytearray([0xE3] * 6))
+
+		self.fp.seek(0x327438) # 0x729838
+		self.fp.write(bytearray([0xE3] * 7))
+
+		self.fp.seek(0x327440) # 0x729840
+		self.fp.write(bytearray([0xE3] * 8))
+
+		self.fp.seek(0x327449) # 0x729849
+		self.fp.write(bytearray([0xE3] * 9))
+
+		self.fp.seek(0x327453) # 0x729853
+		self.fp.write(bytearray([0xE3] * 10))
+
+		self.fp.seek(0x32745E) # 0x72985E
+		self.fp.write(bytearray([0xE3] * 11))
+
+		self.fp.seek(0x32746A) # 0x72986A
+		self.fp.write(bytearray([0xE3] * 12))
+
+		self.fp.seek(0x327477) # 0x729877
+		self.fp.write(bytearray([0xE3] * 13))
+
+		self.fp.seek(0x327485) # 0x729885
+		self.fp.write(bytearray([0xE3] * 14))
+
+		self.fp.seek(0x327494) # 0x729894
+		self.fp.write(bytearray([0xE3] * 15))
+
+		self.fp.seek(0x3274A4) # 0x7298A4
+		self.fp.write(bytearray([0xE3] * 16))
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
