@@ -811,6 +811,13 @@ class PatchSafeLeaf(Patch):
 			0x90
 ]))
 
+class PatchBossMusicOverride(Patch):
+	name = 'bossmusicoverride'
+	description = 'Restores script control over boss room music'
+	def patch(self):
+        # nop out the boss music playing natively, allowing the OSI to control it
+		self.fp.seek(0x2387C3) #0x6393C3 GcBaseBoss::PlayMusic
+		self.fp.write(bytearray([0x90] * 30)) # nop 30
 
 def patches_list():
 	prefix = 'Patch'
