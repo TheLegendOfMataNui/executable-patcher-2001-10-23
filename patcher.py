@@ -819,6 +819,26 @@ class PatchBossMusicOverride(Patch):
 		self.fp.seek(0x2387C3) #0x6393C3 GcBaseBoss::PlayMusic
 		self.fp.write(bytearray([0x90] * 30)) # nop 30
 
+class PatchOSIFileAllocation(Patch):
+	name = 'osifileallocation'
+	description = 'Reduces amount allocated by ScSLOSIFileIO'
+	def patch(self):
+		# By default, the game allocates 0x320_0000 (52,428,800) bytes every time 
+		# an ScSLOSIFileIO object is created *and* every time one is saved
+		# This is not great, since the entire heap of the game is 200 MB by default
+		self.fp.seek(0x14D3ED) # 0x54DFED Create_File
+		self.fp.write(bytearray([0x00, 0x90, 0x01, 0x00])) # (push) 0x19000 ; (102,400)
+
+		# also adjust all bounds checks
+		self.fp.seek(0x14D698) # 0x54E298 Write_Byte
+		self.fp.write(bytearray([0x00, 0x90, 0x01, 0x00])) # (add edx) 0x19000
+
+		self.fp.seek(0x14D6D8) # 0x54E2D8 Write_Word
+		self.fp.write(bytearray([0x00, 0x90, 0x01, 0x00])) # (add edx) 0x19000
+
+		self.fp.seek(0x14D745) # 0x54E345 Write_Long
+		self.fp.write(bytearray([0x00, 0x90, 0x01, 0x00])) # (add edx) 0x19000
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
