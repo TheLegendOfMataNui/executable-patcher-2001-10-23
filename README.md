@@ -33,6 +33,7 @@ optional arguments:
                         No not apply listed patches
 
 patches:
+  bossmusicoverride		Restores script control over boss room music
   characterpatch        Patch all the text characters
   convanimpatch         Patch conversation animations to add more
   dragonmelee           Dragon melee attack fix
@@ -43,6 +44,7 @@ patches:
   loadbardots           Patch to swap out loading bar periods for specially made bar dots
   matoranidcheck        Avoid crash when running GcCharacter::SetTohunga on non-vlgr characters
   matoranrgb            Fix RGB values for matoran torsos and Kapuras red
+  osifileallocation     Reduces amount allocated by ScSLOSIFileIO
   pausetoggle           Pause double toggle fix
   pickupsnapping        Patch pick up snapping to disable snapping to terrain
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
@@ -57,7 +59,7 @@ patches:
   win10                 Windows 10
   windbossmovetoa       Wind boss move toa attack and release fix
 
-Copyright (c) 2018-2022 JrMasterModelBuilder
+Copyright (c) 2018-2026 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 ```
 
@@ -81,6 +83,6 @@ If you find a bug or have compatibility issues, please open a ticket under issue
 
 ## License
 
-Copyright (c) 2018-2025 JrMasterModelBuilder
+Copyright (c) 2018-2026 JrMasterModelBuilder
 
 Licensed under the Mozilla Public License, v. 2.0
