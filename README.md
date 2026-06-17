@@ -20,7 +20,7 @@ Always run this script on an unmodified copy of the original file as it does not
 usage: patcher.py [-h] [-e ENABLED | -d DISABLED] file
 
 TLOMN Build 2001-10-23 Patcher
-Version: 1.17.0
+Version: 1.18.0
 
 positional arguments:
   file                  File to be patched
@@ -33,16 +33,24 @@ optional arguments:
                         No not apply listed patches
 
 patches:
+  bossmusicoverride		Restores script control over boss room music
+  characterpatch        Patch all the text characters
+  convanimpatch         Patch conversation animations to add more
   dragonmelee           Dragon melee attack fix
-  frenchcharacter       Patch character for the French language
+  grappleflyingfix      Fixes the grapple flying bug
+  hiverespawn           Fixes flying Rahi respawning with walking AI
   hunaaicontroller      Avoid null pointer error on characters without an AI controller with Huna
-  hvp                   Hardward vertex processing
+  hvp                   Hardware vertex processing
+  loadbardots           Patch to swap out loading bar periods for specially made bar dots
+  matoranidcheck        Avoid crash when running GcCharacter::SetTohunga on non-vlgr characters
+  matoranrgb            Fix RGB values for matoran torsos and Kapuras red
+  osifileallocation     Reduces amount allocated by ScSLOSIFileIO
   pausetoggle           Pause double toggle fix
-  matoranrgb            Fix RGB values for Onu-Matoran
   pickupsnapping        Patch pick up snapping to disable snapping to terrain
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
   rockbosshitpoints     Rock boss hit points crash fix
   rockbossraindeath     Rock boss death by elemental power rain fix
+  safeleaf              Adds null check to GetLeaf
   savequit              Patch to prevent save corrupting save on quit code
   screenres4            Set default screen resolution to 4
   screenresini          Allow ini to control screen resolution
@@ -51,7 +59,7 @@ patches:
   win10                 Windows 10
   windbossmovetoa       Wind boss move toa attack and release fix
 
-Copyright (c) 2018-2022 JrMasterModelBuilder
+Copyright (c) 2018-2026 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 ```
 
@@ -75,6 +83,6 @@ If you find a bug or have compatibility issues, please open a ticket under issue
 
 ## License
 
-Copyright (c) 2018-2022 JrMasterModelBuilder
+Copyright (c) 2018-2026 JrMasterModelBuilder
 
 Licensed under the Mozilla Public License, v. 2.0
