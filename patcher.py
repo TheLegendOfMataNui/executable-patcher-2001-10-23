@@ -839,6 +839,21 @@ class PatchOSIFileAllocation(Patch):
 		self.fp.seek(0x14D745) # 0x54E345 Write_Long
 		self.fp.write(bytearray([0x00, 0x90, 0x01, 0x00])) # (add edx) 0x19000
 
+class PatchSafeHide(Patch):
+	name = 'safehide'
+	description = 'returns if null in GcAreaDirector::Hide'
+	def patch(self):
+		# GcAreaDirector::Hide has a few blocks checking if the object received from 
+		# GcAreaDirector::Get is null
+		# Weirdly, it never returns in these cases, leading to a crash when it tries
+		# to get an ID of a nonexistent object
+		# Thankfully, there's some alignment data we can reuse for our purposes
+		self.fp.seek(0x882D2) # 0x488ED2 GcAreaDirector::Hide
+		self.fp.write(bytearray([0x06])) # (jz) LAB_488ED9 ; (instead of LAB_488EE0), into alignment data
+		self.fp.seek(0x882D9) # 0x488ED9
+		self.fp.write(bytearray([0xE9, 0xFC, 0x03, 0x00, 0x00]) # jmp LAB_4892DA ; (return label)
+		self.fp.write(bytearray([0x90, 0x90])) # 2x nops
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
