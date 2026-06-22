@@ -851,7 +851,7 @@ class PatchSafeHide(Patch):
 		self.fp.seek(0x882D2) # 0x488ED2 GcAreaDirector::Hide
 		self.fp.write(bytearray([0x06])) # (jz) LAB_488ED9 ; (instead of LAB_488EE0), into alignment data
 		self.fp.seek(0x882D9) # 0x488ED9
-		self.fp.write(bytearray([0xE9, 0xFC, 0x03, 0x00, 0x00]) # jmp LAB_4892DA ; (return label)
+		self.fp.write(bytearray([0xE9, 0xFC, 0x03, 0x00, 0x00])) # jmp LAB_4892DA ; (return label)
 		self.fp.write(bytearray([0x90, 0x90])) # 2x nops
 
 def patches_list():
