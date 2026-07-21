@@ -809,7 +809,7 @@ class PatchSafeLeaf(Patch):
 			0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
 			0x90, 0x90, 0x90, 0x90, 0x90, 0x90,
 			0x90
-]))
+		]))
 
 class PatchBossMusicOverride(Patch):
 	name = 'bossmusicoverride'
@@ -841,7 +841,7 @@ class PatchOSIFileAllocation(Patch):
 
 class PatchSafeHide(Patch):
 	name = 'safehide'
-	description = 'returns if null in GcAreaDirector::Hide'
+	description = 'Returns if null in GcAreaDirector::Hide'
 	def patch(self):
 		# GcAreaDirector::Hide has a few blocks checking if the object received from 
 		# GcAreaDirector::Get is null
@@ -853,6 +853,188 @@ class PatchSafeHide(Patch):
 		self.fp.seek(0x882D9) # 0x488ED9
 		self.fp.write(bytearray([0xE9, 0xFC, 0x03, 0x00, 0x00])) # jmp LAB_4892DA ; (return label)
 		self.fp.write(bytearray([0x90, 0x90])) # 2x nops
+
+class PatchSafeBosses(Patch):
+	name = 'safebosses'
+	description = 'Properly cleans up two boss AI controllers'
+	def patch(self):
+		# GcRockBoss and GcMudBoss both, uniquely to the other bosses, inherit from
+		# GcCharacter instead of GcBaseBoss
+		# They also have 'aiin' controllers, which causes them to register five handlers
+		# However, their CleanUp functions never run GcCharacter::CleanUp
+		# which causes those handlers to remain in memory and crash the game on certain
+		# actions, most notably Gali's melee
+		# Thankfully, both functions have exactly 9 bytes of alignment data to spare,
+		# allowing a 5-byte CALL instruction to be inserted in just the right spot
+		self.fp.seek(0x243DA9) # 0x6449a9 GcMudBoss::CleanUp
+		self.fp.write(bytearray([
+		    0xE8, 0x92, 0x9D, 0xDC, 0xFF, # CALL GcCharacter::CleanUp
+		    # existing code, calls corrected
+		    0x8B, 0x15, 0x5C, 0x20, 0x7F, 0x00,       # mov edx, [kAllEventObjects]
+		    0x89, 0x55, 0xD8,                         # mov [ebp-0x28], edx
+		    0x8D, 0x4D, 0xD8,                         # lea ecx, [ebp-0x28]
+		    0xC7, 0x45, 0xD4, 0x03, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x2c], 3
+		    0x8D, 0x55, 0xD4,                         # lea edx, [ebp-0x2c]
+		    0x89, 0xD8,                               # mov eax, ebx
+		    0x85, 0xC0,                               # test eax, eax
+		    0x74, 0x05,                               # je short 2f
+		    0x05, 0x68, 0x03, 0x00, 0x00,             # add eax, 0x368
+		    0x51,                                     # push ecx
+		    0x52,                                     # push edx
+		    0x50,                                     # push eax
+		    0xE8, 0xD9, 0x34, 0xED, 0xFF,             # call GcEventManager::RemoveHandler
+		    0x83, 0xC4, 0x0C,                         # add esp, 0xc
+		    0x8B, 0x93, 0x00, 0x01, 0x00, 0x00,       # mov edx, [ebx+0x100]
+		    0x89, 0x55, 0xE0,                         # mov [ebp-0x20], edx
+		    0x8D, 0x4D, 0xE0,                         # lea ecx, [ebp-0x20]
+		    0xC7, 0x45, 0xDC, 0x06, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x24], 0x6
+		    0x8D, 0x55, 0xDC,                         # lea edx, [ebp-0x24]
+		    0x89, 0xD8,                               # mov eax, ebx
+		    0x85, 0xC0,                               # test eax, eax
+		    0x74, 0x05,                               # je short 5b
+		    0x05, 0x68, 0x03, 0x00, 0x00,             # add eax, 0x368
+		    0x51,                                     # push ecx
+		    0x52,                                     # push edx
+		    0x50,                                     # push eax
+		    0xE8, 0xAD, 0x34, 0xED, 0xFF,             # call GcEventManager::RemoveHandler
+		    0x83, 0xC4, 0x0C,                         # add esp, 0xc
+		    0x8B, 0x93, 0x00, 0x01, 0x00, 0x00,       # mov edx, [ebx+0x100]
+		    0x89, 0x55, 0xE8,                         # mov [ebp-0x18], edx
+		    0x8D, 0x55, 0xE8,                         # lea edx, [ebp-0x18]
+		    0xC7, 0x45, 0xE4, 0x07, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x1c], 0x7
+		    0x8D, 0x45, 0xE4,                         # lea eax, [ebp-0x1c]
+		    0x85, 0xDB,                               # test ebx, ebx
+		    0x74, 0x06,                               # je short 86
+		    0x81, 0xC3, 0x68, 0x03, 0x00, 0x00,       # add ebx, 0x368
+		    0x52,                                     # push edx
+		    0x50,                                     # push eax
+		    0x53,                                     # push ebx
+		    0xE8, 0x82, 0x34, 0xED, 0xFF,             # call GcEventManager::RemoveHandler
+		    0x83, 0xC4, 0x0C,                         # add esp, 0xc
+		    0xC7, 0x45, 0xEC, 0x33, 0x30, 0x30, 0x6D, # mov dword ptr [ebp-0x14], 0x6d303033 ; 'm003'
+		    0x8D, 0x45, 0xEC,                         # lea eax, [ebp-0x14]
+		    0x50,                                     # push eax
+		    0xE8, 0xFF, 0x41, 0xEC, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+		    0x59,                                     # pop ecx
+		    0xC7, 0x45, 0xF0, 0x37, 0x30, 0x30, 0x6D, # mov dword ptr [ebp-0x10], 0x6d303037 ; 'm007'
+		    0x8D, 0x45, 0xF0,                         # lea eax, [ebp-0x10]
+		    0x50,                                     # push eax
+		    0xE8, 0xEE, 0x41, 0xEC, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+		    0x59,                                     # pop ecx
+		    0xC7, 0x45, 0xF4, 0x30, 0x31, 0x30, 0x6D, # mov dword ptr [ebp-0xc], 0x6d303130 ; 'm010'
+		    0x8D, 0x45, 0xF4,                         # lea eax, [ebp-0xc]
+		    0x50,                                     # push eax
+		    0xE8, 0xDD, 0x41, 0xEC, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+		    0x59,                                     # pop ecx
+		    0xC7, 0x45, 0xF8, 0x39, 0x30, 0x30, 0x6D, # mov dword ptr [ebp-0x8], 0x6d303039 ; 'm009'
+		    0x8D, 0x45, 0xF8,                         # lea eax, [ebp-0x8]
+		    0x50,                                     # push eax
+		    0xE8, 0xCC, 0x41, 0xEC, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+		    0x59,                                     # pop ecx
+		    0x8D, 0x65, 0xFC,                         # lea esp, [ebp-0x4]
+		    0x5B,                                     # pop ebx
+		    0x5D,                                     # pop ebp
+		    0xC3                                      # ret
+		]))
+		self.fp.seek(0x24C7B9) # 0x64D3B9 GcRockBoss::CleanUp
+		self.fp.write(bytearray([
+		    0xE8, 0x82, 0x13, 0xDC, 0xFF, # CALL GcCharacter::CleanUp
+		    # existing code, calls corrected
+			0x8B, 0x15, 0xD4, 0x30, 0x7F, 0x00,       # mov edx, [kAllEventObjects]
+			0x89, 0x55, 0xC4,                         # mov [ebp-0x3c], edx
+			0x8D, 0x4D, 0xC4,                         # lea ecx, [ebp-0x3c]
+			0xC7, 0x45, 0xC0, 0x03, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x40], 0x3
+			0x8D, 0x55, 0xC0,                         # lea edx, [ebp-0x40]
+			0x89, 0xD8,                               # mov eax, ebx
+			0x85, 0xC0,                               # test eax, eax
+			0x74, 0x05,                               # je short 2f
+			0x05, 0x68, 0x03, 0x00, 0x00,             # add eax, 0x368
+			0x51,                                     # push ecx
+			0x52,                                     # push edx
+			0x50,                                     # push eax
+			0xE8, 0xC9, 0xAA, 0xEC, 0xFF,             # call GcEventManager::RemoveHandler
+			0x83, 0xC4, 0x0C,                         # add esp, 0xc
+			0xC7, 0x45, 0xC8, 0x67, 0x72, 0x61, 0x74, # mov dword ptr [ebp-0x38], 0x74617267 ; 'targ'
+			0x8D, 0x45, 0xC8,                         # lea eax, [ebp-0x38]
+			0x50,                                     # push eax
+			0x89, 0xD9,                               # mov ecx, ebx
+			0xE8, 0x54, 0x84, 0xDC, 0xFF,             # call GcCharacter::SwitchMask
+			0xC7, 0x45, 0xCC, 0x3F, 0x3F, 0x3F, 0x3F, # mov dword ptr [ebp-0x34], 0x3f3f3f3f ; '????'
+			0x8D, 0x45, 0xCC,                         # lea eax, [ebp-0x34]
+			0x50,                                     # push eax
+			0x89, 0xD9,                               # mov ecx, ebx
+			0xE8, 0x42, 0x84, 0xDC, 0xFF,             # call GcCharacter::SwitchMask
+			0x8B, 0x93, 0x00, 0x01, 0x00, 0x00,       # mov edx, [ebx+0x100]
+			0x89, 0x55, 0xD4,                         # mov [ebp-0x2c], edx
+			0x8D, 0x4D, 0xD4,                         # lea ecx, [ebp-0x2c]
+			0xC7, 0x45, 0xD0, 0x06, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x30], 0x6
+			0x8D, 0x55, 0xD0,                         # lea edx, [ebp-0x30]
+			0x89, 0xD8,                               # mov eax, ebx
+			0x85, 0xC0,                               # test eax, eax
+			0x74, 0x05,                               # je short 7f ~>
+			0x05, 0x68, 0x03, 0x00, 0x00,             # add eax, 0x368
+			0x51,                                     # push ecx
+			0x52,                                     # push edx
+			0x50,                                     # push eax
+			0xE8, 0x79, 0xAA, 0xEC, 0xFF,             # call GcEventManager::RemoveHandler
+			0x83, 0xC4, 0x0C,                         # add esp, 0xc
+			0x8B, 0x93, 0x00, 0x01, 0x00, 0x00,       # mov edx, [ebx+0x100]
+			0x89, 0x55, 0xDC,                         # mov [ebp-0x24], edx
+			0x8D, 0x4D, 0xDC,                         # lea ecx, [ebp-0x24]
+			0xC7, 0x45, 0xD8, 0x07, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x28], 0x7
+			0x8D, 0x55, 0xD8,                         # lea edx, [ebp-0x28]
+			0x89, 0xD8,                               # mov eax, ebx
+			0x85, 0xC0,                               # test eax, eax
+			0x74, 0x05,                               # je short ab ~>
+			0x05, 0x68, 0x03, 0x00, 0x00,             # add eax, 0x368
+			0x51,                                     # push ecx
+			0x52,                                     # push edx
+			0x50,                                     # push eax
+			0xE8, 0x4D, 0xAA, 0xEC, 0xFF,             # call GcEventManager::RemoveHandler
+			0x83, 0xC4, 0x0C,                         # add esp, 0xc
+			0x8B, 0x15, 0xD4, 0x34, 0x7F, 0x00,       # mov edx, [kCont1]
+			0x89, 0x55, 0xE4,                         # mov [ebp-0x1c], edx
+			0x8D, 0x55, 0xE4,                         # lea edx, [ebp-0x1c]
+			0xC7, 0x45, 0xE0, 0x06, 0x00, 0x00, 0x00, # mov dword ptr [ebp-0x20], 0x6
+			0x8D, 0x45, 0xE0,                         # lea eax, [ebp-0x20]
+			0x85, 0xDB,                               # test ebx, ebx
+			0x74, 0x06,                               # je short d6 ~>
+			0x81, 0xC3, 0x68, 0x03, 0x00, 0x00,       # add ebx, 0x368
+			0x52,                                     # push edx
+			0x50,                                     # push eax
+			0x53,                                     # push ebx
+			0xE8, 0x22, 0xAA, 0xEC, 0xFF,             # call GcEventManager::RemoveHandler
+			0x83, 0xC4, 0x0C,                         # add esp, 0xc
+			0xC7, 0x45, 0xE8, 0x34, 0x30, 0x6B, 0x72, # mov dword ptr [ebp-0x18], 0x726b3034 ; 'rk04'
+			0x8D, 0x45, 0xE8,                         # lea eax, [ebp-0x18]
+			0x50,                                     # push eax
+			0xE8, 0x9F, 0xB7, 0xEB, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+			0x59,                                     # pop ecx
+			0xC7, 0x45, 0xEC, 0x38, 0x30, 0x6B, 0x72, # mov dword ptr [ebp-0x14], 0x726b3038 ; 'rk08'
+			0x8D, 0x45, 0xEC,                         # lea eax, [ebp-0x14]
+			0x50,                                     # push eax
+			0xE8, 0x8E, 0xB7, 0xEB, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+			0x59,                                     # pop ecx
+			0xC7, 0x45, 0xF0, 0x39, 0x30, 0x6B, 0x72, # mov dword ptr [ebp-0x10], 0x726b3039 ; 'rk09'
+			0x8D, 0x45, 0xF0,                         # lea eax, [ebp-0x10]
+			0x50,                                     # push eax
+			0xE8, 0x7D, 0xB7, 0xEB, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+			0x59,                                     # pop ecx
+			0xC7, 0x45, 0xF4, 0x30, 0x31, 0x6B, 0x72, # mov dword ptr [ebp-0xc], 0x726b3130 ; 'rk10'
+			0x8D, 0x45, 0xF4,                         # lea eax, [ebp-0xc]
+			0x50,                                     # push eax
+			0xE8, 0x6C, 0xB7, 0xEB, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+			0x59,                                     # pop ecx
+			0xC7, 0x45, 0xF8, 0x31, 0x31, 0x6B, 0x72, # mov dword ptr [ebp-0x8], 0x726b3131 ; 'rk11'
+			0x8D, 0x45, 0xF8,                         # lea eax, [ebp-0x8]
+			0x50,                                     # push eax
+			0xE8, 0x5B, 0xB7, 0xEB, 0xFF,             # call GcCharacterMoveInterpreter::StopCheckAnimDone
+			0x59,                                     # pop ecx
+			0x8D, 0x65, 0xFC,                         # lea esp, [ebp-0x4]
+			0x5B,                                     # pop ebx
+			0x5D,                                     # pop ebp
+			0xC3                                      # ret
+		]))
 
 def patches_list():
 	prefix = 'Patch'
