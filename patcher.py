@@ -1036,6 +1036,185 @@ class PatchSafeBosses(Patch):
 			0xC3                                      # ret
 		]))
 
+class PatchMudSoftlock(Patch):
+	name = 'mudsoftlock'
+	description = 'Fixes softlock at end of Onua'
+	def patch(self):
+		# GcMudBoss::Reset only clears two flags instead of 
+		# resetting the entire bitfield to 0
+		# If this happens while flag 0x10 is set, the boss
+		# will wait for its animation m007 (MUDM_THROW) to finish before clearing it
+		# this however never happens
+		# This patch simply resets the flags instead of running an AND operation
+		self.fp.seek(0x243CE5) # 0x6448E5 GcMudBoss::Reset
+		self.fp.write(bytearray(
+		    [0x66, 0xC7, 0x86, 0x6C, 0x03, 0x00, 0x00, 0x00, 0x00] # mov word ptr [esi + 0x36C], 0
+		))
+
+class PatchMudAim(Patch):
+	name = 'mudaim'
+	description = 'Makes mud man slightly more difficult'
+	def patch(self):
+		# GcMudBoss and GcRockBoss share many similarities
+		# Since ThrowMudBall and ThrowBoulder both take the same arguments,
+		# use them in the same way, and don't use anything specific to their classes,
+		# the two functions are basically interchangeable.
+		# The differences are that GcRockBoss::ThrowBoulder also has a 45 speed minimum
+		# and aims 2 units higher than the player's Y position (which is approximately center of mass)
+		# This patch forces OSIGcMudBossThrowMudBall to call GcRockBoss::ThrowBoulder instead 
+		# of GcMudBoss::ThrowMudBall
+		# A C++ equivalent is basically doing
+		# (reinterpret_cast<GcRockBoss*>(mudboss))->ThrowBoulder(projectile, bone)
+		self.fp.seek(0x242DDA) # 0x6439DA
+		self.fp.write(bytearray(
+		    [0xE8, 0x11, 0xAA, 0x00, 0x00] # call ?ThrowBoulder@GcRockBoss@@QAEXPAVGcVectorProjectile@@K@Z
+		))
+
+
+class PatchBossMeter(Patch):
+	name = 'bossmeter'
+	description = 'Hands GcBossMeter to OSI'
+	def patch(self):
+		# Since GcBossMeter is neatly encapsulated and only concerns the UI,
+		# it can be replaced with a series of custom OnEvent calls
+		# from where the script can take control
+		# GcBossMeter::InitMeter takes an unused string argument,
+		# (0x0 in all default cases), repurposed
+		# as an addend to the base event number (1100, chosen arbitrarily)
+		# all other GcBossMeter functions then call this->InitMeter(X, 1)
+		# where X is 0 for DecMeter, 1 for Remove and 2 for Reset
+		self.fp.seek(0x238840) # 0x639440 GcBossMeter::InitMeter
+		self.fp.write(bytearray([
+			0x55,                                       #    push ebp
+			0x89, 0xE5,                                 #    mov ebp, esp
+			0x83, 0xEC, 0x70,                           #    sub esp, 0x70
+			0x89, 0x4D, 0x94,                           #    mov [ebp-0x6c], ecx
+			0x66, 0xC7, 0x45, 0x98, 0x0F, 0x00,         #    mov word ptr [ebp-0x68], 0xf
+			0xC7, 0x45, 0x9C, 0x00, 0x00, 0x00, 0x00,   #    mov dword ptr [ebp-0x64], 0x0
+			0x8B, 0x45, 0x0C,                           #    mov eax, [ebp+0xc]
+			0x05, 0x4C, 0x04, 0x00, 0x00,               #    add eax, 0x44c
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xA8,                           #    lea eax, [ebp-0x58]
+			0x50,                                       #    push eax
+			0xE8, 0x48, 0x11, 0xDF, 0xFF,               #    call ?CreateVariant@@YA?AVScOSIVariant@@H@Z
+			0x59,                                       #    pop ecx
+			0x59,                                       #    pop ecx
+			0x8B, 0x55, 0xA8,                           #    mov edx, [ebp-0x58]
+			0x66, 0x89, 0x55, 0xA0,                     #    mov [ebp-0x60], dx
+			0x8B, 0x55, 0xAC,                           #    mov edx, [ebp-0x54]
+			0x89, 0x55, 0xA4,                           #    mov [ebp-0x5c], edx
+			0x8B, 0x55, 0xA0,                           #    mov edx, [ebp-0x60]
+			0x66, 0x89, 0x55, 0xB0,                     #    mov [ebp-0x50], dx
+			0x8B, 0x55, 0xA4,                           #    mov edx, [ebp-0x5c]
+			0x89, 0x55, 0xB4,                           #    mov [ebp-0x4c], edx
+			0x8B, 0x45, 0x08,                           #    mov eax, [ebp+0x8]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xB8,                           #    lea eax, [ebp-0x48]
+			0x50,                                       #    push eax
+			0xE8, 0x1F, 0x11, 0xDF, 0xFF,               #    call ?CreateVariant@@YA?AVScOSIVariant@@H@Z
+			0x59,                                       #    pop ecx
+			0x59,                                       #    pop ecx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xC0,                     #    mov [ebp-0x40], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xC4,                           #    mov [ebp-0x3c], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xC8,                     #    mov [ebp-0x38], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xCC,                           #    mov [ebp-0x34], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xD0,                     #    mov [ebp-0x30], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xD4,                           #    mov [ebp-0x2c], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xD8,                     #    mov [ebp-0x28], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xDC,                           #    mov [ebp-0x24], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xE0,                     #    mov [ebp-0x20], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xE4,                           #    mov [ebp-0x1c], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xE8,                     #    mov [ebp-0x18], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xEC,                           #    mov [ebp-0x14], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xF0,                     #    mov [ebp-0x10], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xF4,                           #    mov [ebp-0xc], edx
+			0x8B, 0x55, 0x98,                           #    mov edx, [ebp-0x68]
+			0x66, 0x89, 0x55, 0xF8,                     #    mov [ebp-0x8], dx
+			0x8B, 0x55, 0x9C,                           #    mov edx, [ebp-0x64]
+			0x89, 0x55, 0xFC,                           #    mov [ebp-0x4], edx
+			0x8D, 0x45, 0xF8,                           #    lea eax, [ebp-0x8]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xF0,                           #    lea eax, [ebp-0x10]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xE8,                           #    lea eax, [ebp-0x18]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xE0,                           #    lea eax, [ebp-0x20]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xD8,                           #    lea eax, [ebp-0x28]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xD0,                           #    lea eax, [ebp-0x30]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xC8,                           #    lea eax, [ebp-0x38]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xC0,                           #    lea eax, [ebp-0x40]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xB8,                           #    lea eax, [ebp-0x48]
+			0x50,                                       #    push eax
+			0x8D, 0x45, 0xB0,                           #    lea eax, [ebp-0x50]
+			0x50,                                       #    push eax
+			0x68, 0x02, 0x4C, 0x74, 0x00,               #    push _@1034
+			0x8B, 0x0D, 0x7C, 0x87, 0x83, 0x00,         #    mov ecx, [?sVM@GcGame@@2V?$ScAutoRefPtr@VScOSIVirtualMachine@@@@A]
+			0xE8, 0xED, 0x1D, 0xFD, 0xFF,               #    call ?Call@ScOSIVirtualMachine@@QAEXPBDVScOSIVariant@@111111111@Z
+			0x89, 0xEC,                                 #    mov esp, ebp
+			0x5D,                                       #    pop ebp
+			0xC2, 0x08, 0x00,                           #    ret 0x8
+		]))
+		self.fp.write(bytearray([0x90] * 0x247)) # nop out the rest of the old function, and the alignment byte
+		# we are now at GcBossMeter::DecMeter, 0x639780 or 0x238B80
+		self.fp.write(bytearray([
+			0x55,       # push ebp
+			0x89, 0xE5, # mov ebp, esp
+			0x89, 0xC8, # mov eax, ecx
+			0x6A, 0x01, # push 0x1
+			0x6A, 0x00, # push 0x0
+			0xe8, 0xB2, 0xFC, 0xFF, 0xFF, # call GcBossMeter::InitMeter
+			0x89, 0xEC, # mov esp, ebp
+			0x5D,       # pop ebp
+			0xC3        # ret
+		]))
+		self.fp.write(bytearray([0x90] * 0x23)) # nop the rest
+		self.fp.seek(0x238BC0) # 0x6397C0 GcBossMeter::Remove
+		self.fp.write(bytearray([
+			0x55,       # push ebp
+			0x89, 0xE5, # mov ebp, esp
+			0x89, 0xC8, # mov eax, ecx
+			0x6A, 0x01, # push 0x1
+			0x6A, 0x01, # push 0x1
+			0xe8, 0x72, 0xFC, 0xFF, 0xFF, # call GcBossMeter::InitMeter
+			0x89, 0xEC, # mov esp, ebp
+			0x5D,       # pop ebp
+			0xC3        # ret
+		]))
+		self.fp.write(bytearray([0x90] * 0x54)) # nop the rest
+		self.fp.seek(0x238C30) # 0x639830 GcBossMeter::Reset
+		self.fp.write(bytearray([
+			0x55,       # push ebp
+			0x89, 0xE5, # mov ebp, esp
+			0x89, 0xC8, # mov eax, ecx
+			0x6A, 0x01, # push 0x1
+			0x6A, 0x02, # push 0x2
+			0xe8, 0x02, 0xFC, 0xFF, 0xFF, # call GcBossMeter::InitMeter
+			0x89, 0xEC, # mov esp, ebp
+			0x5D,       # pop ebp
+			0xC3        # ret
+		]))
+		self.fp.write(bytearray([0x90] * 0x28)) # nop the rest
+
+
 def patches_list():
 	prefix = 'Patch'
 	root = globals().copy()
