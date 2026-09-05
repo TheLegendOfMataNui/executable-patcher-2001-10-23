@@ -20,7 +20,7 @@ Always run this script on an unmodified copy of the original file as it does not
 usage: patcher.py [-h] [-e ENABLED | -d DISABLED] file
 
 TLOMN Build 2001-10-23 Patcher
-Version: 1.18.0
+Version: 1.19.0
 
 positional arguments:
   file                  File to be patched
@@ -47,6 +47,7 @@ patches:
   osifileallocation     Reduces amount allocated by ScSLOSIFileIO
   pausetoggle           Pause double toggle fix
   pickupsnapping        Patch pick up snapping to disable snapping to terrain
+  removetokenrgb        Removes native coloring of token pickups
   rockbossdamage        Rock boss always vulnerable and hurt when toa is hurt fix
   rockbosshitpoints     Rock boss hit points crash fix
   rockbossraindeath     Rock boss death by elemental power rain fix

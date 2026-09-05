@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
 BIONICLE: The Legend of Mata Nui Executable Patcher for build 2001-10-23
-Version: 1.17.0
+Version: 1.19.0
 
-Copyright (c) 2018-2022 JrMasterModelBuilder
+Copyright (c) 2018-2026 JrMasterModelBuilder
 Licensed under the Mozilla Public License, v. 2.0
 """
 
@@ -1070,7 +1070,6 @@ class PatchMudAim(Patch):
 		    [0xE8, 0x11, 0xAA, 0x00, 0x00] # call ?ThrowBoulder@GcRockBoss@@QAEXPAVGcVectorProjectile@@K@Z
 		))
 
-
 class PatchBossMeter(Patch):
 	name = 'bossmeter'
 	description = 'Hands GcBossMeter to OSI'
@@ -1214,6 +1213,16 @@ class PatchBossMeter(Patch):
 		]))
 		self.fp.write(bytearray([0x90] * 0x28)) # nop the rest
 
+class PatchRemoveTokenRGB(Patch):
+	name = 'removetokenrgb'
+	description = 'Removes native coloring of token pickups'
+	def patch(self):
+        # nop out the GcAnimSprite::SetColor calls as this can just be called in script anyway
+		self.fp.seek(0x101F8C) #0x502B8C GcPositionLoader::LoadPositions
+		self.fp.write(bytearray([0xE9, 0x04, 0x04, 0x00, 0x00])) # jmp     loc_502F95
+		self.fp.seek(0x101F91) 
+		self.fp.write(bytearray([0x90] * 167)) # nop 30
+
 
 def patches_list():
 	prefix = 'Patch'
@@ -1273,13 +1282,13 @@ def main():
 	parser = argparse.ArgumentParser(
 		description=os.linesep.join([
 			'TLOMN Build 2001-10-23 Patcher',
-			'Version: 1.17.0'
+			'Version: 1.19.0'
 		]),
 		epilog=os.linesep.join([
 			'patches:',
 			os.linesep.join(patches_help),
 			'',
-			'Copyright (c) 2018-2022 JrMasterModelBuilder',
+			'Copyright (c) 2018-2026 JrMasterModelBuilder',
 			'Licensed under the Mozilla Public License, v. 2.0'
 		]),
 		formatter_class=argparse.RawTextHelpFormatter
