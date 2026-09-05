@@ -1221,7 +1221,7 @@ class PatchRemoveTokenRGB(Patch):
 		self.fp.seek(0x101F8C) #0x502B8C GcPositionLoader::LoadPositions
 		self.fp.write(bytearray([0xE9, 0x04, 0x04, 0x00, 0x00])) # jmp     loc_502F95
 		self.fp.seek(0x101F91) 
-		self.fp.write(bytearray([0x90] * 167)) # nop 30
+		self.fp.write(bytearray([0x90] * 167)) # nop 167
 
 
 def patches_list():
